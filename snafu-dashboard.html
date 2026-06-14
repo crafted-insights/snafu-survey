@@ -1,0 +1,822 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Snafu Brewing Co. - Survey Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+/* ====================================================
+   BRAND TOKENS
+   ==================================================== */
+:root {
+  --bg: #0c0c10;
+  --surface: #18181f;
+  --surface2: #21212a;
+  --teal: #5EDDD8;
+  --magenta: #C255B4;
+  --text: #F0ECEC;
+  --muted: #8a8896;
+  --line: #2c2c3a;
+  --ok: #4ade80;
+  --warn: #fb923c;
+  --danger: #f87171;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:-apple-system,'Helvetica Neue',Arial,sans-serif;-webkit-font-smoothing:antialiased}
+
+/* ---- Login overlay ---- */
+#loginOverlay{
+  position:fixed;inset:0;z-index:999;
+  background:var(--bg);
+  display:flex;align-items:center;justify-content:center;
+}
+.login-box{
+  width:100%;max-width:360px;padding:40px 32px;
+  background:var(--surface);border:1px solid var(--line);border-radius:18px;
+  text-align:center;
+}
+.login-logo-main{font-size:28px;font-weight:900;color:#fff;letter-spacing:.08em;text-transform:uppercase}
+.login-logo-sub{font-size:9px;font-weight:700;color:var(--teal);letter-spacing:.22em;text-transform:uppercase;margin-top:2px;margin-bottom:28px}
+.login-box h2{font-size:18px;font-weight:700;margin-bottom:6px}
+.login-box p{font-size:13px;color:var(--muted);margin-bottom:20px}
+.login-input{
+  width:100%;background:var(--surface2);border:1.5px solid var(--line);
+  border-radius:10px;padding:13px 15px;font-size:15px;color:var(--text);
+  font-family:inherit;margin-bottom:12px;
+}
+.login-input:focus{outline:none;border-color:var(--teal)}
+.login-input::placeholder{color:var(--muted)}
+.login-btn{
+  width:100%;background:var(--teal);color:#000;border:none;border-radius:10px;
+  padding:14px;font-size:15px;font-weight:800;cursor:pointer;transition:.15s;
+}
+.login-btn:hover{opacity:.88}
+.login-err{font-size:13px;color:var(--danger);margin-top:10px;min-height:18px}
+
+/* ---- Dashboard ---- */
+#dashboard{display:none}
+
+/* topbar */
+.topbar{
+  background:#000;border-bottom:1px solid #1a1a24;
+  padding:14px 24px;
+  display:flex;align-items:center;justify-content:space-between;gap:16px;
+  position:sticky;top:0;z-index:10;
+}
+.tbar-logo{display:flex;flex-direction:column}
+.tbar-logo-main{font-size:18px;font-weight:900;color:#fff;letter-spacing:.08em;text-transform:uppercase}
+.tbar-logo-sub{font-size:8px;font-weight:700;color:var(--teal);letter-spacing:.22em;text-transform:uppercase;margin-top:1px}
+.tbar-center{font-size:13px;font-weight:600;color:var(--muted);letter-spacing:.12em;text-transform:uppercase}
+.tbar-right{display:flex;align-items:center;gap:12px}
+.refresh-btn{
+  background:none;border:1px solid var(--line);border-radius:8px;
+  padding:7px 14px;font-size:12px;font-weight:600;color:var(--muted);
+  cursor:pointer;transition:.12s;
+}
+.refresh-btn:hover{border-color:var(--teal);color:var(--teal)}
+.logout-btn{background:none;border:none;font-size:12px;color:var(--muted);cursor:pointer;padding:7px 4px}
+.logout-btn:hover{color:var(--danger)}
+
+/* main layout */
+.main{max-width:1200px;margin:0 auto;padding:24px 20px 60px}
+
+/* stat strip */
+.stats-strip{
+  display:grid;grid-template-columns:repeat(3,1fr);gap:12px;
+  margin-bottom:24px;
+}
+@media(max-width:600px){.stats-strip{grid-template-columns:1fr 1fr}}
+.stat-card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px 20px}
+.stat-card .lbl{font-size:10.5px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
+.stat-card .val{font-size:32px;font-weight:900;line-height:1}
+.stat-card .sub{font-size:12px;color:var(--muted);margin-top:4px}
+.val.teal{color:var(--teal)}
+.val.green{color:var(--ok)}
+.val.warn{color:var(--warn)}
+
+/* nps bar */
+.nps-bar-wrap{margin-top:12px;display:flex;height:8px;border-radius:99px;overflow:hidden;gap:2px}
+.nps-seg{height:100%;transition:width .6s ease}
+.nps-legend{display:flex;gap:16px;margin-top:8px;font-size:11px;color:var(--muted)}
+.nps-legend span{display:flex;align-items:center;gap:5px}
+.dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+
+/* chart grid */
+.chart-grid{
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:16px;
+}
+@media(max-width:720px){.chart-grid{grid-template-columns:1fr}}
+.chart-card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:20px 20px 16px}
+.chart-card.full{grid-column:1/-1}
+.chart-card h3{font-size:13px;font-weight:700;color:var(--text);margin-bottom:4px}
+.chart-card .q-label{font-size:11.5px;color:var(--muted);margin-bottom:16px;line-height:1.4}
+.chart-wrap{position:relative;height:220px}
+.chart-wrap.tall{height:280px}
+.chart-wrap.short{height:160px}
+
+/* text response cards */
+.responses-section{margin-top:20px}
+.responses-section h3{font-size:16px;font-weight:700;margin-bottom:4px}
+.responses-section p{font-size:13px;color:var(--muted);margin-bottom:16px}
+.resp-tabs{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap}
+.resp-tab{
+  background:var(--surface2);border:1px solid var(--line);
+  border-radius:8px;padding:7px 14px;font-size:13px;font-weight:600;
+  color:var(--muted);cursor:pointer;transition:.12s;
+}
+.resp-tab.active{background:var(--teal);color:#000;border-color:var(--teal)}
+.resp-list{display:flex;flex-direction:column;gap:8px;max-height:400px;overflow-y:auto}
+.resp-item{
+  background:var(--surface2);border:1px solid var(--line);
+  border-radius:10px;padding:13px 15px;
+  font-size:14px;color:var(--text);line-height:1.5;
+}
+.resp-item .meta{font-size:11px;color:var(--muted);margin-top:5px}
+
+/* zip table */
+.zip-table{width:100%;border-collapse:collapse}
+.zip-table th{text-align:left;font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);padding:6px 12px;border-bottom:1px solid var(--line)}
+.zip-table td{padding:8px 12px;font-size:14px;border-bottom:1px solid var(--line)}
+.zip-table tr:last-child td{border-bottom:none}
+.zip-bar-cell{width:50%}
+.zip-bar-bg{background:var(--line);border-radius:4px;height:6px;overflow:hidden}
+.zip-bar-fill{height:100%;background:var(--teal);border-radius:4px}
+
+/* loading / empty */
+.loading{text-align:center;padding:60px 24px;color:var(--muted)}
+.loading .spin{font-size:28px;animation:spin 1s linear infinite;display:inline-block;margin-bottom:12px}
+@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+.empty{text-align:center;padding:40px 24px;color:var(--muted);font-size:13px}
+
+.hidden{display:none!important}
+
+/* ---- Redeem button ---- */
+.redeem-btn{
+  background:var(--magenta);color:#fff;border:none;border-radius:8px;
+  padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer;
+}
+.redeem-btn:hover{opacity:.88}
+
+/* ---- Redeem Modal ---- */
+.modal-overlay{
+  position:fixed;inset:0;z-index:200;
+  background:rgba(0,0,0,.78);backdrop-filter:blur(3px);
+  display:flex;align-items:center;justify-content:center;padding:20px;
+}
+.modal-box{
+  width:100%;max-width:440px;
+  background:var(--surface);border:1px solid var(--line);border-radius:18px;overflow:hidden;
+}
+.modal-hdr{
+  padding:18px 22px;display:flex;align-items:center;justify-content:space-between;
+  border-bottom:1px solid var(--line);
+}
+.modal-title{font-size:16px;font-weight:700}
+.modal-close{background:none;border:none;font-size:20px;color:var(--muted);cursor:pointer;line-height:1;padding:0}
+.modal-close:hover{color:var(--text)}
+.modal-body{padding:22px;display:flex;flex-direction:column;gap:14px}
+.redeem-row{display:flex;gap:10px}
+.redeem-row .login-input{margin-bottom:0;flex:1;letter-spacing:.1em}
+.teal-btn{
+  background:var(--teal);color:#000;border:none;border-radius:10px;
+  padding:13px 18px;font-size:14px;font-weight:800;cursor:pointer;white-space:nowrap;
+}
+.teal-btn:hover{opacity:.88}
+.redeem-found{background:var(--surface2);border:1px solid var(--ok);border-radius:12px;padding:16px}
+.redeem-found-hdr{
+  font-size:11px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--ok);margin-bottom:12px;
+}
+.rdtl{display:flex;justify-content:space-between;font-size:13px;padding:6px 0;border-bottom:1px solid var(--line)}
+.rdtl:last-of-type{border-bottom:none}
+.rdtl span:first-child{color:var(--muted)}
+.rdtl span:last-child{font-weight:600}
+.rdtl-quote{font-size:12px;color:var(--muted);font-style:italic;margin-top:10px;line-height:1.5}
+.redeem-notfound{
+  background:rgba(248,113,113,.1);border:1px solid var(--danger);
+  border-radius:10px;padding:14px;font-size:13px;color:var(--danger);
+}
+.sale-lbl{font-size:12px;font-weight:600;color:var(--muted)}
+.apply-btn{
+  width:100%;background:var(--magenta);color:#fff;border:none;border-radius:10px;
+  padding:14px;font-size:15px;font-weight:800;cursor:pointer;
+}
+.apply-btn:hover{opacity:.88}
+.apply-btn:disabled{opacity:.4;pointer-events:none}
+.modal-note{font-size:11px;color:var(--muted);text-align:center}
+</style>
+</head>
+<body>
+
+<!-- ---- LOGIN ---- -->
+<div id="loginOverlay">
+  <div class="login-box">
+    <div class="login-logo-main">SNAFU</div>
+    <div class="login-logo-sub">Brewing Company</div>
+    <h2>Dashboard Login</h2>
+    <p>Staff access only. Enter the dashboard password to continue.</p>
+    <input type="password" class="login-input" id="pwInput" placeholder="Password" autocomplete="current-password">
+    <button class="login-btn" id="loginBtn">Sign in</button>
+    <div class="login-err" id="loginErr"></div>
+  </div>
+</div>
+
+<!-- ---- DASHBOARD ---- -->
+<div id="dashboard">
+  <div class="topbar">
+    <div class="tbar-logo">
+      <div class="tbar-logo-main">SNAFU</div>
+      <div class="tbar-logo-sub">Brewing Company</div>
+    </div>
+    <div class="tbar-center">Survey Dashboard</div>
+    <div class="tbar-right">
+      <button class="redeem-btn" onclick="openRedeem()">Redeem Code</button>
+      <button class="refresh-btn" id="refreshBtn">Refresh</button>
+      <button class="logout-btn" id="logoutBtn">Sign out</button>
+    </div>
+  </div>
+
+  <div class="main" id="main">
+    <div class="loading" id="loadingState">
+      <div class="spin">o</div>
+      <div>Loading responses...</div>
+    </div>
+    <div id="dashContent" class="hidden"></div>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   CONFIG - fill these in before deploying
+   ============================================================ */
+const CONFIG = {
+  password: "snafu2026",   // CHANGE THIS before sharing with staff
+
+  // Publish your Google Sheet: File > Share > Publish to web
+  // Choose the "Responses" sheet, CSV format, then paste the URL here.
+  sheetCsvUrl: "",
+
+  // Same deployed Apps Script URL as in the survey — logs redemptions.
+  appsScriptUrl: ""
+};
+
+/* ============================================================
+   AUTH
+   ============================================================ */
+const SESSION_KEY = "snafu_dash_auth";
+
+function checkSession() {
+  if (sessionStorage.getItem(SESSION_KEY) === "1") showDashboard();
+}
+
+document.getElementById("loginBtn").addEventListener("click", tryLogin);
+document.getElementById("pwInput").addEventListener("keydown", e => { if (e.key === "Enter") tryLogin(); });
+
+function tryLogin() {
+  const pw = document.getElementById("pwInput").value;
+  if (pw === CONFIG.password) {
+    sessionStorage.setItem(SESSION_KEY, "1");
+    document.getElementById("loginErr").textContent = "";
+    showDashboard();
+  } else {
+    document.getElementById("loginErr").textContent = "Incorrect password. Try again.";
+    document.getElementById("pwInput").value = "";
+    document.getElementById("pwInput").focus();
+  }
+}
+
+function showDashboard() {
+  document.getElementById("loginOverlay").classList.add("hidden");
+  document.getElementById("dashboard").style.display = "block";
+  loadData();
+}
+
+document.getElementById("logoutBtn").addEventListener("click", () => {
+  sessionStorage.removeItem(SESSION_KEY);
+  location.reload();
+});
+
+document.getElementById("refreshBtn").addEventListener("click", loadData);
+
+/* ============================================================
+   DATA LOADING
+   ============================================================ */
+async function loadData() {
+  document.getElementById("loadingState").classList.remove("hidden");
+  document.getElementById("dashContent").classList.add("hidden");
+
+  if (!CONFIG.sheetCsvUrl) {
+    renderDashboard(demoData());
+    return;
+  }
+
+  try {
+    const res = await fetch(CONFIG.sheetCsvUrl + "&t=" + Date.now());
+    const text = await res.text();
+    const rows = parseCSV(text);
+    if (rows.length < 2) { showEmpty(); return; }
+
+    const headers = rows[0].map(h => h.trim());
+    const records = rows.slice(1).filter(r => r.some(c => c.trim())).map(r => {
+      const obj = {};
+      headers.forEach((h, i) => { obj[h] = (r[i] || "").trim(); });
+      return obj;
+    });
+    renderDashboard(records);
+  } catch (err) {
+    console.error(err);
+    showEmpty("Could not load data. Check your CSV URL and that the sheet is published.");
+  }
+}
+
+/* simple RFC 4180 CSV parser */
+function parseCSV(text) {
+  const rows = [];
+  const lines = text.split(/\r?\n/);
+  for (const line of lines) {
+    if (!line.trim()) continue;
+    const row = [];
+    let cur = "", inQ = false;
+    for (let i = 0; i < line.length; i++) {
+      const ch = line[i];
+      if (inQ) {
+        if (ch === '"' && line[i+1] === '"') { cur += '"'; i++; }
+        else if (ch === '"') inQ = false;
+        else cur += ch;
+      } else {
+        if (ch === '"') inQ = true;
+        else if (ch === ',') { row.push(cur); cur = ""; }
+        else cur += ch;
+      }
+    }
+    row.push(cur);
+    rows.push(row);
+  }
+  return rows;
+}
+
+function showEmpty(msg) {
+  document.getElementById("loadingState").classList.add("hidden");
+  document.getElementById("dashContent").innerHTML = `<div class="empty">${msg || "No responses yet."}</div>`;
+  document.getElementById("dashContent").classList.remove("hidden");
+}
+
+/* ============================================================
+   CHART DEFAULTS
+   ============================================================ */
+Chart.defaults.color = "#8a8896";
+Chart.defaults.borderColor = "#2c2c3a";
+Chart.defaults.font.family = "-apple-system,'Helvetica Neue',Arial,sans-serif";
+
+const TEAL    = "#5EDDD8";
+const MAGENTA = "#C255B4";
+const PALETTE = ["#5EDDD8","#C255B4","#4ade80","#fb923c","#818cf8","#f472b6","#34d399","#fbbf24","#60a5fa","#a78bfa"];
+
+/* ============================================================
+   RENDER DASHBOARD
+   ============================================================ */
+function renderDashboard(records) {
+  const n = records.length;
+
+  /* helpers */
+  const nums = (key) => records.map(r => parseFloat(r[key])).filter(v => !isNaN(v));
+  const avg  = (arr) => arr.length ? (arr.reduce((s,v)=>s+v,0)/arr.length).toFixed(2) : "—";
+  const freq = (key) => {
+    const m = {};
+    records.forEach(r => {
+      const v = r[key];
+      if (v) { v.split(", ").forEach(part => { part = part.trim(); if (part) m[part] = (m[part]||0)+1; }); }
+    });
+    return m;
+  };
+  const sortedFreq = (key, limit=10) =>
+    Object.entries(freq(key)).sort((a,b)=>b[1]-a[1]).slice(0,limit);
+
+  /* NPS */
+  const npsVals = nums("nps");
+  const promoters  = npsVals.filter(v=>v>=9).length;
+  const passives   = npsVals.filter(v=>v>=7&&v<=8).length;
+  const detractors = npsVals.filter(v=>v<=6).length;
+  const total_nps  = npsVals.length || 1;
+  const npsScore   = Math.round((promoters/total_nps - detractors/total_nps) * 100);
+  const npsColor   = npsScore >= 50 ? "green" : npsScore >= 0 ? "teal" : "warn";
+
+  /* Avg satisfaction */
+  const satVals = nums("overall_satisfaction");
+  const avgSat  = avg(satVals);
+
+  /* dates */
+  const dates = records.map(r => r.submitted_at ? new Date(r.submitted_at) : null).filter(Boolean);
+  const dateRange = dates.length >= 2
+    ? dates.reduce((a,d)=>d<a?d:a).toLocaleDateString() + " - " + dates.reduce((a,d)=>d>a?d:a).toLocaleDateString()
+    : dates.length === 1 ? dates[0].toLocaleDateString() : "—";
+
+  /* ---- Build HTML ---- */
+  let html = `
+  <!-- Stats strip -->
+  <div class="stats-strip">
+    <div class="stat-card">
+      <div class="lbl">Total Responses</div>
+      <div class="val teal">${n}</div>
+      <div class="sub">${dateRange}</div>
+    </div>
+    <div class="stat-card">
+      <div class="lbl">NPS Score</div>
+      <div class="val ${npsColor}">${npsVals.length ? npsScore : "—"}</div>
+      ${npsVals.length ? `
+      <div class="nps-bar-wrap">
+        <div class="nps-seg" style="width:${promoters/total_nps*100}%;background:var(--ok)"></div>
+        <div class="nps-seg" style="width:${passives/total_nps*100}%;background:var(--muted)"></div>
+        <div class="nps-seg" style="width:${detractors/total_nps*100}%;background:var(--danger)"></div>
+      </div>
+      <div class="nps-legend">
+        <span><span class="dot" style="background:var(--ok)"></span>${promoters} promoters</span>
+        <span><span class="dot" style="background:var(--muted)"></span>${passives} passive</span>
+        <span><span class="dot" style="background:var(--danger)"></span>${detractors} detractors</span>
+      </div>` : ""}
+    </div>
+    <div class="stat-card">
+      <div class="lbl">Avg Satisfaction</div>
+      <div class="val teal">${avgSat}<span style="font-size:16px;font-weight:500;color:var(--muted)"> / 5</span></div>
+      <div class="sub">Based on ${satVals.length} responses</div>
+    </div>
+  </div>
+
+  <!-- Chart grid -->
+  <div class="chart-grid">
+
+    <!-- Visit frequency -->
+    <div class="chart-card">
+      <h3>Visit Frequency</h3>
+      <div class="q-label">How often do you visit Snafu?</div>
+      <div class="chart-wrap short"><canvas id="cVisitFreq"></canvas></div>
+    </div>
+
+    <!-- What brought them in -->
+    <div class="chart-card">
+      <h3>What Brought Them In</h3>
+      <div class="q-label">What brought you in today? (multi-select)</div>
+      <div class="chart-wrap short"><canvas id="cVisitReason"></canvas></div>
+    </div>
+
+    <!-- How they heard -->
+    <div class="chart-card">
+      <h3>How They Found Us</h3>
+      <div class="q-label">How did you first hear about Snafu?</div>
+      <div class="chart-wrap"><canvas id="cHeardVia"></canvas></div>
+    </div>
+
+    <!-- Associations -->
+    <div class="chart-card">
+      <h3>Brand Associations</h3>
+      <div class="q-label">What do you most associate Snafu with? (multi-select)</div>
+      <div class="chart-wrap"><canvas id="cAssoc"></canvas></div>
+    </div>
+
+    <!-- Social following -->
+    <div class="chart-card">
+      <h3>Social Media Following</h3>
+      <div class="q-label">Do you follow Snafu on social media or belong to our text club?</div>
+      <div class="chart-wrap short"><canvas id="cSocial"></canvas></div>
+    </div>
+
+    <!-- Satisfaction distribution -->
+    <div class="chart-card">
+      <h3>Satisfaction Breakdown</h3>
+      <div class="q-label">Overall satisfaction rating distribution (1-5)</div>
+      <div class="chart-wrap short"><canvas id="cSatDist"></canvas></div>
+    </div>
+
+    <!-- Ratings matrix -->
+    <div class="chart-card full">
+      <h3>Experience Ratings</h3>
+      <div class="q-label">Rate each of the following (1 = poor, 5 = excellent)</div>
+      <div class="chart-wrap tall"><canvas id="cRatings"></canvas></div>
+    </div>
+
+    <!-- NPS distribution -->
+    <div class="chart-card full">
+      <h3>NPS Distribution</h3>
+      <div class="q-label">How likely are you to recommend Snafu to a friend? (0-10)</div>
+      <div class="chart-wrap short"><canvas id="cNpsDist"></canvas></div>
+    </div>
+
+    <!-- What would get them to visit more -->
+    <div class="chart-card">
+      <h3>Barriers to Visiting More</h3>
+      <div class="q-label">What would get you to visit more often?</div>
+      <div class="chart-wrap"><canvas id="cVisitMore"></canvas></div>
+    </div>
+
+    <!-- Take home -->
+    <div class="chart-card">
+      <h3>To-Go Purchases</h3>
+      <div class="q-label">Did you, or would you, buy cans, crowlers, or merch to take home?</div>
+      <div class="chart-wrap short"><canvas id="cTakeHome"></canvas></div>
+    </div>
+
+    <!-- Top zip codes -->
+    <div class="chart-card full">
+      <h3>Top Zip Codes</h3>
+      <div class="q-label">Where are your guests traveling from?</div>
+      <div id="zipTable"></div>
+    </div>
+
+  </div>
+
+  <!-- Open text responses -->
+  <div class="responses-section" style="margin-top:24px">
+    <h3>Open-Ended Responses</h3>
+    <p>What guests are saying in their own words.</p>
+    <div class="resp-tabs">
+      <button class="resp-tab active" onclick="showRespTab('love_most',this)">What they love</button>
+      <button class="resp-tab" onclick="showRespTab('improve',this)">What to improve</button>
+    </div>
+    <div class="resp-list" id="respList"></div>
+  </div>
+  `;
+
+  document.getElementById("dashContent").innerHTML = html;
+  document.getElementById("dashContent").classList.remove("hidden");
+  document.getElementById("loadingState").classList.add("hidden");
+
+  /* ---- Draw charts ---- */
+
+  function hbar(id, labels, data, colors) {
+    new Chart(document.getElementById(id), {
+      type: "bar",
+      data: {
+        labels,
+        datasets: [{ data, backgroundColor: colors || PALETTE.slice(0,labels.length), borderRadius: 6, borderSkipped: false }]
+      },
+      options: {
+        indexAxis: "y",
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { grid: { color: "#2c2c3a" }, ticks: { precision: 0 } },
+          y: { grid: { display: false } }
+        }
+      }
+    });
+  }
+
+  function vbar(id, labels, data, colors) {
+    new Chart(document.getElementById(id), {
+      type: "bar",
+      data: {
+        labels,
+        datasets: [{ data, backgroundColor: colors || PALETTE.slice(0,labels.length), borderRadius: 6, borderSkipped: false }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { grid: { display: false } },
+          y: { grid: { color: "#2c2c3a" }, ticks: { precision: 0 } }
+        }
+      }
+    });
+  }
+
+  /* Visit frequency */
+  const vf = sortedFreq("visit_freq");
+  hbar("cVisitFreq", vf.map(x=>x[0]), vf.map(x=>x[1]));
+
+  /* Visit reason */
+  const vr = sortedFreq("visit_reason");
+  hbar("cVisitReason", vr.map(x=>x[0]), vr.map(x=>x[1]));
+
+  /* Heard via */
+  const hv = sortedFreq("heard_via");
+  hbar("cHeardVia", hv.map(x=>x[0]), hv.map(x=>x[1]));
+
+  /* Associations */
+  const as = sortedFreq("associations");
+  hbar("cAssoc", as.map(x=>x[0]), as.map(x=>x[1]));
+
+  /* Social */
+  const sf = sortedFreq("social_follow");
+  hbar("cSocial", sf.map(x=>x[0]), sf.map(x=>x[1]));
+
+  /* Satisfaction distribution */
+  const satDist = [1,2,3,4,5].map(v => satVals.filter(s=>s===v).length);
+  const satColors = ["#f87171","#fb923c","#fbbf24","#4ade80","#5EDDD8"];
+  vbar("cSatDist", ["1","2","3","4","5"], satDist, satColors);
+
+  /* Ratings matrix */
+  const ratingKeys = ["beer_selection","staff","atmosphere","value","cleanliness"];
+  const ratingLabels = ["Beer selection","Staff","Atmosphere","Value","Cleanliness"];
+  const ratingAvgs = ratingKeys.map(k => {
+    const vals = nums("ratings_" + k);
+    return vals.length ? parseFloat((vals.reduce((s,v)=>s+v,0)/vals.length).toFixed(2)) : 0;
+  });
+  new Chart(document.getElementById("cRatings"), {
+    type: "bar",
+    data: {
+      labels: ratingLabels,
+      datasets: [{
+        label: "Avg rating (out of 5)",
+        data: ratingAvgs,
+        backgroundColor: TEAL,
+        borderRadius: 8,
+        borderSkipped: false
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: { label: ctx => " " + ctx.parsed.y + " / 5" } }
+      },
+      scales: {
+        x: { grid: { display: false } },
+        y: { grid: { color: "#2c2c3a" }, min: 0, max: 5, ticks: { stepSize: 1 } }
+      }
+    }
+  });
+
+  /* NPS distribution */
+  const npsDist = Array.from({length:11},(_,i)=>npsVals.filter(v=>v===i).length);
+  const npsColors = npsDist.map((_,i) => i<=6 ? "#f87171" : i<=8 ? "#8a8896" : "#4ade80");
+  new Chart(document.getElementById("cNpsDist"), {
+    type: "bar",
+    data: {
+      labels: ["0","1","2","3","4","5","6","7","8","9","10"],
+      datasets: [{ data: npsDist, backgroundColor: npsColors, borderRadius: 6, borderSkipped: false }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { grid: { display: false } },
+        y: { grid: { color: "#2c2c3a" }, ticks: { precision: 0 } }
+      }
+    }
+  });
+
+  /* Visit more */
+  const vm = sortedFreq("visit_more");
+  hbar("cVisitMore", vm.map(x=>x[0]), vm.map(x=>x[1]));
+
+  /* Take home */
+  const th = sortedFreq("take_home");
+  new Chart(document.getElementById("cTakeHome"), {
+    type: "doughnut",
+    data: {
+      labels: th.map(x=>x[0]),
+      datasets: [{ data: th.map(x=>x[1]), backgroundColor: [TEAL, MAGENTA, "#8a8896"], borderWidth: 0 }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { position: "bottom", labels: { padding: 16, boxWidth: 12 } } }
+    }
+  });
+
+  /* Zip codes table */
+  const zips = sortedFreq("zip_code");
+  const maxZipCount = zips[0] ? zips[0][1] : 1;
+  let zipHtml = zips.length
+    ? `<table class="zip-table"><thead><tr><th>Zip code</th><th>Count</th><th class="zip-bar-cell"></th></tr></thead><tbody>`
+    + zips.map(([z,c]) => `<tr><td>${z}</td><td>${c}</td><td class="zip-bar-cell"><div class="zip-bar-bg"><div class="zip-bar-fill" style="width:${c/maxZipCount*100}%"></div></div></td></tr>`).join("")
+    + `</tbody></table>`
+    : `<div class="empty">No zip code data yet.</div>`;
+  document.getElementById("zipTable").innerHTML = zipHtml;
+
+  /* Open text */
+  window._respRecords = records;
+  showRespTab("love_most", document.querySelector(".resp-tab.active"));
+}
+
+/* ---- Open text tab switcher ---- */
+function showRespTab(field, el) {
+  document.querySelectorAll(".resp-tab").forEach(t => t.classList.remove("active"));
+  el.classList.add("active");
+  const items = (window._respRecords || []).filter(r => r[field] && r[field].trim());
+  const list  = document.getElementById("respList");
+  if (!items.length) { list.innerHTML = `<div class="empty">No responses for this question yet.</div>`; return; }
+  list.innerHTML = items.map(r => {
+    const date = r.submitted_at ? new Date(r.submitted_at).toLocaleDateString() : "";
+    return `<div class="resp-item">${escHtml(r[field])}<div class="meta">${date}</div></div>`;
+  }).join("");
+}
+
+function escHtml(s) {
+  return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+}
+
+/* ============================================================
+   DEMO DATA - shown when no CSV URL is configured
+   ============================================================ */
+function demoData() {
+  const base = [
+    { submitted_at:"2026-06-10T19:30:00Z", visit_freq:"Monthly", visit_reason:"New beers, Friends and family", heard_via:"Friend recommendation", associations:"Sour beers, Fun atmosphere", social_follow:"Yes, Instagram", overall_satisfaction:"5", ratings_beer_selection:"5", ratings_staff:"4", ratings_atmosphere:"5", ratings_value:"4", ratings_cleanliness:"5", love_most:"The sour beer selection is unreal.", improve:"More food options would be great.", nps:"10", visit_more:"More food options", take_home:"Yes, today", zip_code:"12345" },
+    { submitted_at:"2026-06-10T20:15:00Z", visit_freq:"A few times per year", visit_reason:"An event", heard_via:"Social media", associations:"Cool events", social_follow:"Yes, Instagram, Yes, Facebook", overall_satisfaction:"4", ratings_beer_selection:"4", ratings_staff:"5", ratings_atmosphere:"4", ratings_value:"3", ratings_cleanliness:"4", love_most:"Staff is always so friendly.", improve:"Longer hours on weekends.", nps:"8", visit_more:"Longer hours", take_home:"Yes, in the past", zip_code:"12346" },
+    { submitted_at:"2026-06-11T18:00:00Z", visit_freq:"Weekly or more", visit_reason:"Habit / regular spot", heard_via:"Drove by", associations:"Dog-friendly, The games", social_follow:"Yes, Text Club", overall_satisfaction:"5", ratings_beer_selection:"5", ratings_staff:"5", ratings_atmosphere:"5", ratings_value:"5", ratings_cleanliness:"5", love_most:"This is my living room. Perfect vibe every time.", improve:"", nps:"10", visit_more:"Nothing, I'm already here a lot", take_home:"Yes, today", zip_code:"12345" },
+    { submitted_at:"2026-06-11T19:45:00Z", visit_freq:"It's my first time", visit_reason:"Friends and family", heard_via:"Friend recommendation", associations:"Fun atmosphere, Sour beers", social_follow:"Not yet, but I will!", overall_satisfaction:"4", ratings_beer_selection:"4", ratings_staff:"4", ratings_atmosphere:"5", ratings_value:"4", ratings_cleanliness:"4", love_most:"Great first time. Will be back!", improve:"Could use more seating.", nps:"9", visit_more:"More events", take_home:"No, not this time", zip_code:"12350" },
+    { submitted_at:"2026-06-12T17:30:00Z", visit_freq:"Monthly", visit_reason:"New beers, Work nearby", heard_via:"Google search", associations:"Sour beers", social_follow:"Yes, Instagram", overall_satisfaction:"3", ratings_beer_selection:"4", ratings_staff:"3", ratings_atmosphere:"3", ratings_value:"2", ratings_cleanliness:"4", love_most:"The beer selection is top notch.", improve:"Better value for the price.", nps:"6", visit_more:"More food options", take_home:"No, not this time", zip_code:"12347" },
+  ];
+  return base;
+}
+
+/* ============================================================
+   REDEEM MODAL
+   ============================================================ */
+function openRedeem() {
+  document.getElementById("redeemModal").classList.remove("hidden");
+  document.getElementById("redeemInput").focus();
+}
+
+function closeRedeem() {
+  document.getElementById("redeemModal").classList.add("hidden");
+  document.getElementById("redeemInput").value = "";
+  document.getElementById("redeemResult").innerHTML = "";
+  document.getElementById("redeemSaleSection").classList.add("hidden");
+  const btn = document.getElementById("applyBtn");
+  btn.disabled = false;
+  btn.textContent = "Apply $5 Discount & Log Sale";
+}
+
+function lookupCode() {
+  const code = document.getElementById("redeemInput").value.trim().toUpperCase();
+  if (!code) return;
+  const records = window._respRecords || [];
+  const match = records.find(r => r.discount_code && r.discount_code.toUpperCase() === code);
+  const resultEl = document.getElementById("redeemResult");
+  if (!match) {
+    resultEl.innerHTML = `<div class="redeem-notfound">Code not found. Refresh the dashboard and try again — sheet can lag ~2 min after submission.</div>`;
+    document.getElementById("redeemSaleSection").classList.add("hidden");
+    return;
+  }
+  const date = match.submitted_at ? new Date(match.submitted_at).toLocaleString() : "—";
+  resultEl.innerHTML = `
+    <div class="redeem-found">
+      <div class="redeem-found-hdr">✓ Valid — Customer Profile</div>
+      <div class="rdtl"><span>Survey submitted</span><span>${date}</span></div>
+      <div class="rdtl"><span>Visit frequency</span><span>${match.visit_freq || "—"}</span></div>
+      <div class="rdtl"><span>Satisfaction</span><span>${match.overall_satisfaction || "—"} / 5</span></div>
+      <div class="rdtl"><span>NPS</span><span>${match.nps || "—"} / 10</span></div>
+      ${match.love_most ? `<div class="rdtl-quote">"${escHtml(match.love_most)}"</div>` : ""}
+    </div>`;
+  document.getElementById("redeemFoundCode").value = code;
+  document.getElementById("redeemSaleSection").classList.remove("hidden");
+}
+
+async function applyDiscount() {
+  const code = document.getElementById("redeemFoundCode").value;
+  const total = parseFloat(document.getElementById("saleTotalInput").value);
+  if (isNaN(total) || total < 0) {
+    document.getElementById("saleTotalInput").focus();
+    return;
+  }
+  const btn = document.getElementById("applyBtn");
+  btn.disabled = true;
+  btn.textContent = "Logging…";
+  if (CONFIG.appsScriptUrl) {
+    try {
+      await fetch(CONFIG.appsScriptUrl, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify({ type: "redemption", code, redeemed_at: new Date().toISOString(), sale_total: total })
+      });
+    } catch (err) { console.error("Redemption log error:", err); }
+  }
+  btn.textContent = "✓ Discount Applied!";
+  setTimeout(closeRedeem, 2000);
+}
+
+/* ============================================================
+   INIT
+   ============================================================ */
+checkSession();
+</script>
+<!-- REDEEM MODAL -->
+<div id="redeemModal" class="modal-overlay hidden">
+  <div class="modal-box">
+    <div class="modal-hdr">
+      <span class="modal-title">Redeem Discount Code</span>
+      <button class="modal-close" onclick="closeRedeem()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="redeem-row">
+        <input id="redeemInput" class="login-input" placeholder="SNF-XXXXXX"
+               oninput="this.value=this.value.toUpperCase()"
+               onkeydown="if(event.key==='Enter')lookupCode()">
+        <button class="teal-btn" onclick="lookupCode()">Look Up</button>
+      </div>
+      <div id="redeemResult"></div>
+      <div id="redeemSaleSection" class="hidden">
+        <input type="hidden" id="redeemFoundCode">
+        <div class="sale-lbl">Sale total before discount ($)</div>
+        <input type="number" id="saleTotalInput" class="login-input" placeholder="e.g. 42.50" min="0" step="0.01" style="margin-bottom:0">
+        <button class="apply-btn" id="applyBtn" onclick="applyDiscount()">Apply $5 Discount &amp; Log Sale</button>
+      </div>
+      <div class="modal-note">Code not found? Click Refresh in the dashboard first — sheet can lag ~2 min.</div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Snafu Brewing Co. - Taproom Feedback</title>
+<style>
+/* ====================================================
+   BRAND TOKENS - swap colors here only
+   ==================================================== */
+:root {
+  --bg: #0c0c10;
+  --surface: #18181f;
+  --surface2: #21212a;
+  --teal: #5EDDD8;
+  --teal-dk: #3abdb8;
+  --magenta: #C255B4;
+  --magenta-dk: #a03d95;
+  --text: #F0ECEC;
+  --muted: #8a8896;
+  --line: #2c2c3a;
+  --ok: #4ade80;
+  --radius: 14px;
+  --maxw: 540px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{
+  font-family:-apple-system,'Helvetica Neue',Arial,sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  -webkit-font-smoothing:antialiased;
+  display:flex;justify-content:center;
+  min-height:100dvh;
+}
+.shell{
+  width:100%;max-width:var(--maxw);
+  min-height:100dvh;
+  background:var(--surface);
+  display:flex;flex-direction:column;
+}
+
+/* ---- Topbar ---- */
+.topbar{
+  background:#000;
+  padding:14px 20px;
+  display:flex;align-items:center;justify-content:space-between;
+  flex-shrink:0;
+  border-bottom:1px solid #1a1a24;
+}
+.logo-main{font-size:20px;font-weight:900;color:#fff;letter-spacing:.08em;text-transform:uppercase}
+.logo-sub{font-size:8.5px;font-weight:700;color:var(--teal);letter-spacing:.22em;text-transform:uppercase;margin-top:2px}
+.topbar-tag{font-size:10.5px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+
+/* ---- Progress ---- */
+.progress{height:3px;background:var(--line);flex-shrink:0}
+.progress-fill{height:100%;width:0;background:linear-gradient(90deg,var(--teal),var(--magenta));transition:width .35s cubic-bezier(.2,.8,.2,1)}
+
+/* ---- Intro ---- */
+.intro{
+  flex:1;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  padding:40px 24px;text-align:center;
+}
+.intro-tag{
+  display:inline-flex;align-items:center;gap:7px;
+  background:rgba(194,85,180,.12);border:1px solid var(--magenta);
+  color:var(--magenta);
+  font-size:11px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;
+  padding:6px 14px;border-radius:99px;margin-bottom:24px;
+}
+.intro h1{font-size:28px;font-weight:800;line-height:1.2;margin-bottom:14px;color:var(--text)}
+.intro p{font-size:15px;color:var(--muted);line-height:1.6;max-width:30ch;margin-bottom:28px}
+.reward-card{
+  width:100%;max-width:290px;
+  background:var(--surface2);border:1.5px solid var(--magenta);
+  border-radius:var(--radius);padding:16px 22px;margin-bottom:28px;text-align:center;
+}
+.reward-card .lbl{font-size:10px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--magenta);margin-bottom:4px}
+.reward-card .val{font-size:27px;font-weight:900;color:var(--text)}
+.btn-start{
+  width:100%;max-width:290px;
+  background:var(--teal);color:#000;
+  border:none;border-radius:var(--radius);
+  padding:18px 24px;font-size:17px;font-weight:800;
+  cursor:pointer;transition:background .15s;
+}
+.btn-start:hover{background:var(--teal-dk)}
+
+/* ---- Stage ---- */
+.stage{flex:1;display:flex;flex-direction:column;padding:26px 22px 16px;overflow-y:auto}
+.section-tag{font-size:10.5px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--teal);margin-bottom:10px}
+.q-text{font-size:22px;font-weight:800;line-height:1.25;margin-bottom:6px}
+.q-hint{font-size:14px;color:var(--muted);line-height:1.55;margin-bottom:22px}
+
+/* ---- Options ---- */
+.opts{display:flex;flex-direction:column;gap:8px}
+.opt{
+  display:flex;align-items:center;gap:12px;
+  padding:13px 16px;
+  background:var(--surface2);border:1.5px solid var(--line);
+  border-radius:12px;
+  font-size:15px;font-weight:500;color:var(--text);
+  cursor:pointer;text-align:left;width:100%;appearance:none;
+  transition:border-color .12s,background .12s;
+}
+.opt:hover{border-color:var(--teal)}
+.opt.sel{border-color:var(--teal);background:rgba(94,221,216,.08)}
+.opt-dot{width:18px;height:18px;border-radius:50%;border:2px solid var(--line);flex-shrink:0;transition:.12s}
+.opt.sel .opt-dot{background:var(--teal);border-color:var(--teal);box-shadow:inset 0 0 0 3px var(--surface2)}
+.other-field{
+  width:100%;margin-top:6px;
+  background:var(--surface2);border:1.5px solid var(--teal);
+  border-radius:10px;padding:12px 14px;
+  font-size:15px;color:var(--text);font-family:inherit;
+}
+.other-field:focus{outline:none;border-color:var(--magenta)}
+.other-field::placeholder{color:var(--muted)}
+
+/* ---- Scale ---- */
+.scale-grid{display:grid;gap:6px;margin-bottom:10px}
+.scale-grid.g5{grid-template-columns:repeat(5,1fr)}
+.scale-grid.g11{grid-template-columns:repeat(6,1fr)}
+.sbtn{
+  aspect-ratio:1;
+  background:var(--surface2);border:1.5px solid var(--line);
+  border-radius:10px;font-size:16px;font-weight:700;color:var(--text);
+  cursor:pointer;display:grid;place-items:center;transition:.12s;
+}
+.sbtn:hover{border-color:var(--teal)}
+.sbtn.sel{background:var(--teal);color:#000;border-color:var(--teal)}
+.scale-labels{display:flex;justify-content:space-between;font-size:11.5px;color:var(--muted)}
+
+/* ---- Matrix ---- */
+.matrix{display:flex;flex-direction:column;gap:10px}
+.matrix-hdr{display:flex;align-items:center}
+.matrix-hdr-lbl{flex:0 0 42%;font-size:11px;color:var(--muted)}
+.matrix-hdr-nums{flex:1;display:flex;justify-content:space-around}
+.matrix-hdr-nums span{font-size:11.5px;color:var(--muted);font-weight:600;width:36px;text-align:center}
+.matrix-row{display:flex;align-items:center;gap:8px}
+.matrix-lbl{flex:0 0 42%;font-size:14px;font-weight:500;color:var(--text);line-height:1.3}
+.matrix-btns{flex:1;display:flex;gap:5px}
+.mbtn{
+  flex:1;max-width:46px;aspect-ratio:1;
+  background:var(--surface2);border:1.5px solid var(--line);
+  border-radius:8px;font-size:13px;font-weight:700;color:var(--text);
+  cursor:pointer;display:grid;place-items:center;transition:.12s;
+}
+.mbtn:hover{border-color:var(--teal)}
+.mbtn.sel{background:var(--teal);color:#000;border-color:var(--teal)}
+
+/* ---- Text ---- */
+textarea,input[type=text]{
+  width:100%;background:var(--surface2);border:1.5px solid var(--line);
+  border-radius:12px;padding:14px 16px;
+  font-size:15px;color:var(--text);font-family:inherit;resize:none;
+}
+textarea:focus,input[type=text]:focus{outline:none;border-color:var(--teal)}
+textarea::placeholder,input[type=text]::placeholder{color:var(--muted)}
+
+/* ---- Nav ---- */
+.nav{
+  padding:14px 22px 30px;
+  display:flex;align-items:center;gap:8px;
+  border-top:1px solid var(--line);flex-shrink:0;
+}
+.btn-back{background:none;border:none;font-size:14px;font-weight:600;color:var(--muted);cursor:pointer;padding:12px 6px}
+.btn-back:disabled{opacity:0;pointer-events:none}
+.step-lbl{flex:1;text-align:center;font-size:12px;color:var(--muted);font-weight:500}
+.btn-next{
+  background:var(--teal);color:#000;
+  border:none;border-radius:12px;
+  padding:14px 28px;font-size:15px;font-weight:800;
+  cursor:pointer;transition:.15s;
+}
+.btn-next:hover{background:var(--teal-dk)}
+.btn-next:disabled{opacity:.3;pointer-events:none}
+
+/* ---- Done ---- */
+.done{
+  flex:1;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  padding:36px 24px;text-align:center;gap:8px;
+}
+.check-ring{
+  width:72px;height:72px;border-radius:50%;background:var(--ok);
+  display:grid;place-items:center;margin-bottom:8px;
+  animation:pop .5s cubic-bezier(.2,1.3,.4,1) both;
+}
+.check-ring svg{width:36px;height:36px}
+@keyframes pop{from{transform:scale(.4);opacity:0}to{transform:scale(1);opacity:1}}
+.done h1{font-size:28px;font-weight:800}
+.done p{font-size:14.5px;color:var(--muted);max-width:33ch;line-height:1.55}
+.live-card{
+  margin-top:22px;width:100%;max-width:320px;
+  background:var(--surface2);border:1.5px solid var(--line);
+  border-radius:16px;overflow:hidden;
+}
+.live-head{
+  padding:11px 15px;
+  display:flex;align-items:center;justify-content:space-between;
+  border-bottom:1px solid var(--line);
+}
+.live-tag{display:flex;align-items:center;gap:7px;font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--ok)}
+.pulse{width:8px;height:8px;border-radius:50%;background:var(--ok);animation:pulse 1.4s ease-in-out infinite}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(74,222,128,.5)}50%{box-shadow:0 0 0 7px rgba(74,222,128,0)}}
+.live-clock{font-size:14px;font-weight:700;font-variant-numeric:tabular-nums;color:var(--text)}
+.live-body{padding:15px 15px 17px}
+.live-date{font-size:12px;color:var(--muted);margin-bottom:12px}
+.slider{height:8px;border-radius:99px;background:var(--line);overflow:hidden;position:relative}
+.slider::after{
+  content:"";position:absolute;inset:0;width:38%;border-radius:99px;
+  background:linear-gradient(90deg,transparent,var(--teal),var(--magenta),transparent);
+  animation:slide 2s linear infinite;
+}
+@keyframes slide{0%{transform:translateX(-120%)}100%{transform:translateX(280%)}}
+.reward-proof{margin-top:14px;padding:13px 14px;border:1.5px dashed var(--magenta);border-radius:12px;background:rgba(194,85,180,.07)}
+.reward-proof .lbl{font-size:10px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--magenta)}
+.reward-proof .code{font-size:27px;font-weight:900;letter-spacing:.22em;color:var(--text);margin-top:3px}
+.reward-proof .desc{font-size:11.5px;color:var(--muted);margin-top:3px}
+
+@media(prefers-reduced-motion:reduce){.slider::after{animation-duration:5s}.check-ring{animation:none}}
+.hidden{display:none!important}
+</style>
+</head>
+<body>
+<div class="shell">
+
+  <!-- Topbar -->
+  <div class="topbar">
+    <div class="logo">
+      <div class="logo-main">SNAFU</div>
+      <div class="logo-sub">Brewing Company</div>
+    </div>
+    <div class="topbar-tag">Taproom Feedback</div>
+  </div>
+  <div class="progress"><div class="progress-fill" id="bar"></div></div>
+
+  <!-- Intro screen -->
+  <div class="intro" id="intro">
+    <span class="intro-tag">About 5 minutes</span>
+    <h1>Help us make Snafu even better.</h1>
+    <p>Thanks for coming in. Answer a few quick questions and get $5 off your tab today. Cheers!</p>
+    <div class="reward-card">
+      <div class="lbl">Complete for</div>
+      <div class="val">$5 off your tab</div>
+    </div>
+    <button class="btn-start" id="btnStart">Let's go</button>
+  </div>
+
+  <!-- Survey -->
+  <div class="stage hidden" id="stage"></div>
+  <div class="nav hidden" id="nav">
+    <button class="btn-back" id="back">Back</button>
+    <span class="step-lbl" id="steplbl"></span>
+    <button class="btn-next" id="next">Next</button>
+  </div>
+
+  <!-- Done screen -->
+  <div class="done hidden" id="done">
+    <div class="check-ring">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M20 6 9 17l-5-5"/>
+      </svg>
+    </div>
+    <h1>You're all done!</h1>
+    <p>Thanks for taking the time. Show this screen to your bartender for $5 off your tab.</p>
+    <div class="live-card">
+      <div class="live-head">
+        <span class="live-tag"><span class="pulse"></span>Live - verified</span>
+        <span class="live-clock" id="clock">--:--:--</span>
+      </div>
+      <div class="live-body">
+        <div class="live-date" id="datestr"></div>
+        <div class="slider"></div>
+        <div class="reward-proof">
+          <div class="lbl">Show your bartender</div>
+          <div class="code" id="code">SNF-0000</div>
+          <div class="desc">$5 off your tab today</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+<script>
+/* ============================================================
+   CONFIG - the only block you normally edit
+   ============================================================ */
+const CONFIG = {
+  appsScriptUrl: ""  // paste your deployed Apps Script web app URL here
+};
+
+/* ============================================================
+   SURVEY QUESTIONS
+   types: single | multi | scale | matrix | text
+   ============================================================ */
+const SURVEY = [
+  {
+    id: "visit_freq",
+    type: "single",
+    section: "Your Visit",
+    q: "How often do you visit Snafu?",
+    options: ["It's my first time","A few times per year","Monthly","Weekly or more"],
+    required: true
+  },
+  {
+    id: "visit_reason",
+    type: "multi",
+    section: "Your Visit",
+    q: "What brought you in today?",
+    hint: "Pick all that apply.",
+    options: ["New beers","An event","Friends and family","Work nearby","Habit / regular spot","Picking up to-go beer"],
+    hasOther: true,
+    shuffle: true,
+    required: true
+  },
+  {
+    id: "heard_via",
+    type: "single",
+    section: "How You Found Us",
+    q: "How did you first hear about Snafu?",
+    options: ["Friend recommendation","Google search","Social media","Drove by","Tried your beer at another bar or restaurant","An AI assistant (ChatGPT, Claude, etc.)","Event listing"],
+    hasOther: true,
+    shuffle: true,
+    required: true
+  },
+  {
+    id: "associations",
+    type: "multi",
+    section: "How You Found Us",
+    q: "What do you most associate Snafu with?",
+    hint: "Pick all that apply.",
+    options: ["Sour beers","Fun atmosphere","Cool events","Dog-friendly","The games"],
+    hasOther: true,
+    shuffle: true,
+    required: false
+  },
+  {
+    id: "social_follow",
+    type: "multi",
+    section: "How You Found Us",
+    q: "Do you follow Snafu on social media or belong to our text club?",
+    hint: "Pick all that apply.",
+    options: ["Yes, Instagram","Yes, Facebook","Yes, Text Club","Yes, other platform","Not yet, but I will!"],
+    required: false
+  },
+  {
+    id: "overall_satisfaction",
+    type: "scale",
+    min: 1, max: 5,
+    section: "Your Experience",
+    q: "Overall, how satisfied are you with today's visit?",
+    low: "Very dissatisfied",
+    high: "Very satisfied",
+    required: true
+  },
+  {
+    id: "ratings",
+    type: "matrix",
+    section: "Your Experience",
+    q: "Rate each of the following.",
+    hint: "1 = poor, 5 = excellent",
+    items: [
+      { key: "beer_selection", label: "Beer selection" },
+      { key: "staff",          label: "Staff" },
+      { key: "atmosphere",     label: "Atmosphere" },
+      { key: "value",          label: "Value" },
+      { key: "cleanliness",    label: "Cleanliness" }
+    ],
+    required: true
+  },
+  {
+    id: "love_most",
+    type: "text",
+    section: "Your Experience",
+    q: "What do you love most about Snafu?",
+    placeholder: "Tell us...",
+    required: false
+  },
+  {
+    id: "improve",
+    type: "text",
+    section: "Your Experience",
+    q: "What would improve your experience most?",
+    placeholder: "Tell us...",
+    required: false
+  },
+  {
+    id: "nps",
+    type: "scale",
+    min: 0, max: 10,
+    section: "Coming Back",
+    q: "How likely are you to recommend Snafu to a friend?",
+    low: "Not likely",
+    high: "Very likely",
+    required: true
+  },
+  {
+    id: "visit_more",
+    type: "single",
+    section: "Coming Back",
+    q: "What would get you to visit more often?",
+    options: ["More events","More food options","Longer hours","Nothing, I'm already here a lot"],
+    hasOther: true,
+    required: false
+  },
+  {
+    id: "take_home",
+    type: "single",
+    section: "Coming Back",
+    q: "Did you, or would you, buy cans, crowlers, or merch to take home?",
+    options: ["Yes, today","Yes, in the past","No, not this time"],
+    required: false
+  },
+  {
+    id: "zip_code",
+    type: "text",
+    section: "About You",
+    q: "What's your zip code?",
+    hint: "Helps us understand how far people travel to visit.",
+    placeholder: "e.g. 12345",
+    required: false
+  }
+];
+
+/* shuffle on load for questions flagged shuffle:true */
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+SURVEY.forEach(q => { if (q.shuffle && q.options) q.options = shuffle(q.options); });
+
+/* ============================================================
+   STATE
+   ============================================================ */
+let step = 0;
+let discountCode = "";
+const ans = {};
+const qs = s => document.querySelector(s);
+
+function generateCode() {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // no 0/O/1/I/L ambiguity
+  const arr = new Uint8Array(6);
+  crypto.getRandomValues(arr);
+  return 'SNF-' + Array.from(arr).map(b => chars[b % chars.length]).join('');
+}
+
+/* ============================================================
+   FLOW
+   ============================================================ */
+qs("#btnStart").addEventListener("click", () => {
+  discountCode = generateCode();
+  qs("#intro").classList.add("hidden");
+  qs("#stage").classList.remove("hidden");
+  qs("#nav").classList.remove("hidden");
+  render();
+});
+
+qs("#back").addEventListener("click", () => { if (step > 0) { step--; render(); } });
+qs("#next").addEventListener("click", () => {
+  if (step < SURVEY.length - 1) { step++; render(); }
+  else submitSurvey();
+});
+
+/* ============================================================
+   RENDER
+   ============================================================ */
+function render() {
+  const q = SURVEY[step];
+  const total = SURVEY.length;
+
+  qs("#bar").style.width = ((step + 1) / (total + 1) * 100) + "%";
+  qs("#steplbl").textContent = (step + 1) + " of " + total;
+  qs("#back").disabled = step === 0;
+  qs("#next").textContent = step === total - 1 ? "Submit" : "Next";
+
+  let h = `<div class="section-tag">${q.section || ""}</div>`;
+  h += `<div class="q-text">${q.q}</div>`;
+  if (q.hint) h += `<div class="q-hint">${q.hint}</div>`;
+
+  if      (q.type === "single")  h += buildSingle(q);
+  else if (q.type === "multi")   h += buildMulti(q);
+  else if (q.type === "scale")   h += buildScale(q);
+  else if (q.type === "matrix")  h += buildMatrix(q);
+  else if (q.type === "text")    h += buildText(q);
+
+  qs("#stage").innerHTML = h;
+  attach(q);
+  refreshNext(q);
+}
+
+function x(s) {
+  return String(s).replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/</g,"&lt;");
+}
+
+function buildSingle(q) {
+  const cur = ans[q.id];
+  let h = `<div class="opts">`;
+  q.options.forEach(o =>
+    h += `<button class="opt ${cur===o?"sel":""}" data-v="${x(o)}"><span class="opt-dot"></span>${o}</button>`
+  );
+  if (q.hasOther) {
+    const os = cur === "Other";
+    h += `<button class="opt ${os?"sel":""}" data-v="Other"><span class="opt-dot"></span>Other</button>`;
+    if (os) h += `<input type="text" class="other-field" id="otf" placeholder="Please specify..." value="${x(ans[q.id+"_other"]||"")}">`;
+  }
+  return h + `</div>`;
+}
+
+function buildMulti(q) {
+  const cur = ans[q.id] || [];
+  let h = `<div class="opts">`;
+  q.options.forEach(o =>
+    h += `<button class="opt ${cur.includes(o)?"sel":""}" data-v="${x(o)}"><span class="opt-dot"></span>${o}</button>`
+  );
+  if (q.hasOther) {
+    const os = cur.includes("Other");
+    h += `<button class="opt ${os?"sel":""}" data-v="Other"><span class="opt-dot"></span>Other</button>`;
+    if (os) h += `<input type="text" class="other-field" id="otf" placeholder="Please specify..." value="${x(ans[q.id+"_other"]||"")}">`;
+  }
+  return h + `</div>`;
+}
+
+function buildScale(q) {
+  const n = q.max - q.min + 1;
+  let h = `<div class="scale-grid ${n > 7 ? "g11" : "g5"}">`;
+  for (let i = q.min; i <= q.max; i++)
+    h += `<button class="sbtn ${ans[q.id]===i?"sel":""}" data-v="${i}">${i}</button>`;
+  h += `</div><div class="scale-labels"><span>${q.low}</span><span>${q.high}</span></div>`;
+  return h;
+}
+
+function buildMatrix(q) {
+  const cur = ans[q.id] || {};
+  let h = `<div class="matrix">`;
+  h += `<div class="matrix-hdr"><div class="matrix-hdr-lbl"></div><div class="matrix-hdr-nums">`;
+  [1,2,3,4,5].forEach(n => h += `<span>${n}</span>`);
+  h += `</div></div>`;
+  q.items.forEach(item => {
+    h += `<div class="matrix-row"><div class="matrix-lbl">${item.label}</div><div class="matrix-btns">`;
+    [1,2,3,4,5].forEach(n =>
+      h += `<button class="mbtn ${cur[item.key]===n?"sel":""}" data-item="${item.key}" data-v="${n}">${n}</button>`
+    );
+    h += `</div></div>`;
+  });
+  return h + `</div>`;
+}
+
+function buildText(q) {
+  return `<textarea id="ta" rows="4" placeholder="${x(q.placeholder||"")}">${x(ans[q.id]||"")}</textarea>`;
+}
+
+/* ============================================================
+   WIRING
+   ============================================================ */
+function attach(q) {
+  if (q.type === "single") {
+    qs("#stage").querySelectorAll(".opt").forEach(b => {
+      b.addEventListener("click", () => { ans[q.id] = b.dataset.v; render(); });
+    });
+    const otf = qs("#otf");
+    if (otf) otf.addEventListener("input", ev => { ans[q.id+"_other"] = ev.target.value; refreshNext(q); });
+  }
+  if (q.type === "multi") {
+    qs("#stage").querySelectorAll(".opt").forEach(b => {
+      b.addEventListener("click", () => {
+        const s = new Set(ans[q.id] || []);
+        s.has(b.dataset.v) ? s.delete(b.dataset.v) : s.add(b.dataset.v);
+        ans[q.id] = [...s];
+        render();
+      });
+    });
+    const otf = qs("#otf");
+    if (otf) otf.addEventListener("input", ev => { ans[q.id+"_other"] = ev.target.value; refreshNext(q); });
+  }
+  if (q.type === "scale") {
+    qs("#stage").querySelectorAll(".sbtn").forEach(b => {
+      b.addEventListener("click", () => { ans[q.id] = Number(b.dataset.v); render(); });
+    });
+  }
+  if (q.type === "matrix") {
+    qs("#stage").querySelectorAll(".mbtn").forEach(b => {
+      b.addEventListener("click", () => {
+        if (!ans[q.id]) ans[q.id] = {};
+        ans[q.id][b.dataset.item] = Number(b.dataset.v);
+        render();
+      });
+    });
+  }
+  if (q.type === "text") {
+    const ta = qs("#ta");
+    if (ta) ta.addEventListener("input", ev => { ans[q.id] = ev.target.value; refreshNext(q); });
+  }
+}
+
+/* ============================================================
+   VALIDATION
+   ============================================================ */
+function isAnswered(q) {
+  if (!q.required) return true;
+  const a = ans[q.id];
+  if (q.type === "multi")  return a && a.length > 0;
+  if (q.type === "matrix") return a && q.items.every(item => a[item.key] !== undefined);
+  return a !== undefined && a !== "";
+}
+function refreshNext(q) { qs("#next").disabled = !isAnswered(q); }
+
+/* ============================================================
+   SUBMIT
+   ============================================================ */
+async function submitSurvey() {
+  qs("#next").disabled = true;
+  qs("#next").textContent = "Sending...";
+
+  const payload = { submitted_at: new Date().toISOString(), discount_code: discountCode, ...flattenAns() };
+
+  if (CONFIG.appsScriptUrl) {
+    try {
+      await fetch(CONFIG.appsScriptUrl, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify(payload)
+      });
+    } catch (err) { console.error("Submit error:", err); }
+  } else {
+    console.log("DEMO MODE payload:", payload);
+  }
+  showDone();
+}
+
+function flattenAns() {
+  const out = {};
+  for (const [k, v] of Object.entries(ans)) {
+    if (Array.isArray(v))                         out[k] = v.join(", ");
+    else if (v && typeof v === "object")           Object.entries(v).forEach(([sk,sv]) => out[k+"_"+sk] = sv);
+    else                                           out[k] = v;
+  }
+  return out;
+}
+
+/* ============================================================
+   DONE SCREEN
+   ============================================================ */
+function showDone() {
+  qs("#stage").classList.add("hidden");
+  qs("#nav").classList.add("hidden");
+  qs("#bar").style.width = "100%";
+  qs("#done").classList.remove("hidden");
+
+  qs("#code").textContent = discountCode;
+
+  tick(); setInterval(tick, 1000);
+}
+function tick() {
+  const d = new Date();
+  qs("#clock").textContent = d.toLocaleTimeString([], {hour:"2-digit",minute:"2-digit",second:"2-digit"});
+  qs("#datestr").textContent = d.toLocaleDateString([], {weekday:"long",month:"long",day:"numeric",year:"numeric"});
+}
+</script>
+</body>
+</html>
