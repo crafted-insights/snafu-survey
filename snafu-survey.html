@@ -10,17 +10,17 @@
    BRAND TOKENS - swap colors here only
    ==================================================== */
 :root {
-  --bg: #0c0c10;
-  --surface: #18181f;
-  --surface2: #21212a;
+  --bg: #f0f2f5;
+  --surface: #ffffff;
+  --surface2: #f0f2f5;
   --teal: #5EDDD8;
   --teal-dk: #3abdb8;
   --magenta: #C255B4;
   --magenta-dk: #a03d95;
-  --text: #F0ECEC;
-  --muted: #8a8896;
-  --line: #2c2c3a;
-  --ok: #4ade80;
+  --text: #111827;
+  --muted: #6b7280;
+  --line: #e5e7eb;
+  --ok: #16a34a;
   --radius: 14px;
   --maxw: 540px;
 }
@@ -378,7 +378,7 @@ const SURVEY = [
     section: "Your Experience",
     q: "What do you love most about Snafu?",
     placeholder: "Tell us...",
-    required: false
+    required: true
   },
   {
     id: "improve",
@@ -386,7 +386,7 @@ const SURVEY = [
     section: "Your Experience",
     q: "What would improve your experience most?",
     placeholder: "Tell us...",
-    required: false
+    required: true
   },
   {
     id: "nps",
@@ -424,6 +424,7 @@ const SURVEY = [
     q: "What's your zip code?",
     hint: "Helps us understand how far people travel to visit.",
     placeholder: "e.g. 12345",
+    singleLine: true,
     required: false
   }
 ];
@@ -556,6 +557,9 @@ function buildMatrix(q) {
 }
 
 function buildText(q) {
+  if (q.singleLine) {
+    return `<input type="text" id="ta" placeholder="${x(q.placeholder||"")}" value="${x(ans[q.id]||"")}">`;
+  }
   return `<textarea id="ta" rows="4" placeholder="${x(q.placeholder||"")}">${x(ans[q.id]||"")}</textarea>`;
 }
 
