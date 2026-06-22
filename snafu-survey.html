@@ -610,8 +610,18 @@ function attach(q) {
    VALIDATION
    ============================================================ */
 function isAnswered(q) {
-  if (!q.required) return true;
   const a = ans[q.id];
+
+  if (q.hasOther) {
+    const otherSelected = q.type === "multi" ? (a && a.includes("Other")) : a === "Other";
+    if (otherSelected && !ans[q.id + "_other"]) return false;
+  }
+
+  if (q.id === "zip_code" && a) {
+    return /^\d{5}(-\d{4})?$/.test(a);
+  }
+
+  if (!q.required) return true;
   if (q.type === "multi")  return a && a.length > 0;
   if (q.type === "matrix") return a && q.items.every(item => a[item.key] !== undefined);
   return a !== undefined && a !== "";
