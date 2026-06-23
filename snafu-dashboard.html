@@ -111,7 +111,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:-apple-
   gap:16px;
 }
 @media(max-width:720px){.chart-grid{grid-template-columns:1fr}}
-.chart-card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:20px 20px 16px}
+.chart-card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:20px 20px 16px;position:relative}
 .chart-card.full{grid-column:1/-1}
 .chart-card h3{font-size:13px;font-weight:700;color:var(--text);margin-bottom:4px}
 .chart-card .q-label{font-size:11.5px;color:var(--muted);margin-bottom:16px;line-height:1.4}
@@ -395,6 +395,7 @@ function renderDashboard(records) {
   };
   const sortedFreq = (key, limit=10) =>
     Object.entries(freq(key)).sort((a,b)=>b[1]-a[1]).slice(0,limit);
+  const cnt = key => records.filter(r => r[key]).length;
 
   /* NPS */
   const npsVals = nums("nps");
@@ -467,6 +468,7 @@ function renderDashboard(records) {
 
     <!-- Visit frequency -->
     <div class="chart-card">
+      <div class="stat-n">n=${cnt("visit_freq")}</div>
       <h3>Visit Frequency</h3>
       <div class="q-label">How often do you visit Snafu?</div>
       <div class="chart-wrap short"><canvas id="cVisitFreq"></canvas></div>
@@ -474,6 +476,7 @@ function renderDashboard(records) {
 
     <!-- What brought them in -->
     <div class="chart-card">
+      <div class="stat-n">n=${cnt("visit_reason")}</div>
       <h3>What Brought Them In</h3>
       <div class="q-label">What brought you in today? (multi-select)</div>
       <div class="chart-wrap short"><canvas id="cVisitReason"></canvas></div>
@@ -481,6 +484,7 @@ function renderDashboard(records) {
 
     <!-- How they heard -->
     <div class="chart-card">
+      <div class="stat-n">n=${cnt("heard_via")}</div>
       <h3>How They Found Us</h3>
       <div class="q-label">How did you first hear about Snafu?</div>
       <div class="chart-wrap"><canvas id="cHeardVia"></canvas></div>
@@ -488,6 +492,7 @@ function renderDashboard(records) {
 
     <!-- Associations -->
     <div class="chart-card">
+      <div class="stat-n">n=${cnt("associations")}</div>
       <h3>Brand Associations</h3>
       <div class="q-label">What do you most associate Snafu with? (multi-select)</div>
       <div class="chart-wrap"><canvas id="cAssoc"></canvas></div>
@@ -495,6 +500,7 @@ function renderDashboard(records) {
 
     <!-- Social following -->
     <div class="chart-card">
+      <div class="stat-n">n=${cnt("social_follow")}</div>
       <h3>Social Media Following</h3>
       <div class="q-label">Do you follow Snafu on social media or belong to our text club?</div>
       <div class="chart-wrap short"><canvas id="cSocial"></canvas></div>
@@ -502,6 +508,7 @@ function renderDashboard(records) {
 
     <!-- Satisfaction distribution -->
     <div class="chart-card">
+      <div class="stat-n">n=${satVals.length}</div>
       <h3>Satisfaction Breakdown</h3>
       <div class="q-label">Overall satisfaction rating distribution (1-5)</div>
       <div class="chart-wrap short"><canvas id="cSatDist"></canvas></div>
@@ -509,6 +516,7 @@ function renderDashboard(records) {
 
     <!-- Ratings matrix -->
     <div class="chart-card full">
+      <div class="stat-n">n=${cnt("ratings_beer_selection")}</div>
       <h3>Experience Ratings</h3>
       <div class="q-label">Rate each of the following (1 = poor, 5 = excellent)</div>
       <div class="chart-wrap tall"><canvas id="cRatings"></canvas></div>
@@ -516,6 +524,7 @@ function renderDashboard(records) {
 
     <!-- NPS distribution -->
     <div class="chart-card full">
+      <div class="stat-n">n=${npsVals.length}</div>
       <h3>NPS Distribution</h3>
       <div class="q-label">How likely are you to recommend Snafu to a friend? (0-10)</div>
       <div class="chart-wrap short"><canvas id="cNpsDist"></canvas></div>
@@ -523,6 +532,7 @@ function renderDashboard(records) {
 
     <!-- What would get them to visit more -->
     <div class="chart-card">
+      <div class="stat-n">n=${cnt("visit_more")}</div>
       <h3>Barriers to Visiting More</h3>
       <div class="q-label">What would get you to visit more often?</div>
       <div class="chart-wrap"><canvas id="cVisitMore"></canvas></div>
@@ -530,6 +540,7 @@ function renderDashboard(records) {
 
     <!-- Take home -->
     <div class="chart-card">
+      <div class="stat-n">n=${cnt("take_home")}</div>
       <h3>To-Go Purchases</h3>
       <div class="q-label">Did you, or would you, buy cans, crowlers, or merch to take home?</div>
       <div class="chart-wrap short"><canvas id="cTakeHome"></canvas></div>
@@ -537,6 +548,7 @@ function renderDashboard(records) {
 
     <!-- Top zip codes -->
     <div class="chart-card full">
+      <div class="stat-n">n=${cnt("zip_code")}</div>
       <h3>Top Zip Codes</h3>
       <div class="q-label">Where are your guests traveling from?</div>
       <div id="zipTable"></div>
