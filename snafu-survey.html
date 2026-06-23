@@ -658,7 +658,7 @@ async function submitSurvey() {
 window.addEventListener("visibilitychange", () => {
   if (document.visibilityState === "hidden" && surveyStarted && !surveyCompleted && Object.keys(ans).length > 0 && CONFIG.appsScriptUrl) {
     const payload = { submitted_at: new Date().toISOString(), status: "abandoned", step_reached: step + 1, total_steps: SURVEY.length, discount_code: discountCode, ...flattenAns() };
-    navigator.sendBeacon(CONFIG.appsScriptUrl, JSON.stringify(payload));
+    fetch(CONFIG.appsScriptUrl, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify(payload), keepalive: true });
   }
 });
 
