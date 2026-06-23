@@ -445,6 +445,8 @@ SURVEY.forEach(q => { if (q.shuffle && q.options) q.options = shuffle(q.options)
    ============================================================ */
 let step = 0;
 let discountCode = "";
+let surveyStarted = false;
+let surveyCompleted = false;
 const ans = {};
 const qs = s => document.querySelector(s);
 
@@ -460,6 +462,7 @@ function generateCode() {
    ============================================================ */
 qs("#btnStart").addEventListener("click", () => {
   discountCode = generateCode();
+  surveyStarted = true;
   qs("#intro").classList.add("hidden");
   qs("#stage").classList.remove("hidden");
   qs("#nav").classList.remove("hidden");
@@ -635,7 +638,7 @@ async function submitSurvey() {
   qs("#next").disabled = true;
   qs("#next").textContent = "Sending...";
 
-  const payload = { submitted_at: new Date().toISOString(), discount_code: discountCode, ...flattenAns() };
+  const payload = { submitted_at: new Date().toISOString(), status: "completed", discount_code: discountCode, ...flattenAns() };
 
   if (CONFIG.appsScriptUrl) {
     try {
@@ -648,8 +651,16 @@ async function submitSurvey() {
   } else {
     console.log("DEMO MODE payload:", payload);
   }
+  surveyCompleted = true;
   showDone();
 }
+
+window.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "hidden" && surveyStarted && !surveyCompleted && Object.keys(ans).length > 0 && CONFIG.appsScriptUrl) {
+    const payload = { submitted_at: new Date().toISOString(), status: "abandoned", step_reached: step + 1, total_steps: SURVEY.length, discount_code: discountCode, ...flattenAns() };
+    navigator.sendBeacon(CONFIG.appsScriptUrl, JSON.stringify(payload));
+  }
+});
 
 function flattenAns() {
   const out = {};
