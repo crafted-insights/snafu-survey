@@ -84,7 +84,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:-apple-
 
 /* stat strip */
 .stats-strip{
-  display:grid;grid-template-columns:repeat(3,1fr);gap:12px;
+  display:grid;grid-template-columns:repeat(4,1fr);gap:12px;
   margin-bottom:24px;
 }
 @media(max-width:600px){.stats-strip{grid-template-columns:1fr 1fr}}
@@ -404,6 +404,13 @@ function renderDashboard(records) {
   const npsScore   = Math.round((promoters/total_nps - detractors/total_nps) * 100);
   const npsColor   = npsScore >= 50 ? "green" : npsScore >= 0 ? "teal" : "warn";
 
+  /* Completion rate */
+  const completed  = records.filter(r => r.status === "completed").length;
+  const abandoned  = records.filter(r => r.status === "abandoned").length;
+  const tracked    = completed + abandoned;
+  const compRate   = tracked > 0 ? Math.round(completed / tracked * 100) : null;
+  const compColor  = compRate === null ? "teal" : compRate >= 70 ? "green" : compRate >= 40 ? "teal" : "warn";
+
   /* Avg satisfaction */
   const satVals = nums("overall_satisfaction");
   const avgSat  = avg(satVals);
@@ -418,6 +425,11 @@ function renderDashboard(records) {
   let html = `
   <!-- Stats strip -->
   <div class="stats-strip">
+    <div class="stat-card">
+      <div class="lbl">Completion Rate</div>
+      <div class="val ${compColor}">${compRate !== null ? compRate + "%" : "—"}</div>
+      <div class="sub">${tracked > 0 ? `${completed} completed · ${abandoned} abandoned` : "Tracking starts now"}</div>
+    </div>
     <div class="stat-card">
       <div class="lbl">Total Responses</div>
       <div class="val teal">${n}</div>
