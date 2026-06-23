@@ -655,12 +655,15 @@ async function submitSurvey() {
   showDone();
 }
 
-window.addEventListener("visibilitychange", () => {
-  if (document.visibilityState === "hidden" && surveyStarted && !surveyCompleted && Object.keys(ans).length > 0 && CONFIG.appsScriptUrl) {
-    const payload = { submitted_at: new Date().toISOString(), status: "abandoned", step_reached: step + 1, total_steps: SURVEY.length, discount_code: discountCode, ...flattenAns() };
-    fetch(CONFIG.appsScriptUrl, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify(payload), keepalive: true });
-  }
-});
+let abandonSent = false;
+function sendAbandon() {
+  if (abandonSent || !surveyStarted || surveyCompleted || Object.keys(ans).length === 0 || !CONFIG.appsScriptUrl) return;
+  abandonSent = true;
+  const payload = { submitted_at: new Date().toISOString(), status: "abandoned", step_reached: step + 1, total_steps: SURVEY.length, discount_code: discountCode, ...flattenAns() };
+  fetch(CONFIG.appsScriptUrl, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify(payload), keepalive: true });
+}
+window.addEventListener("visibilitychange", () => { if (document.visibilityState === "hidden") sendAbandon(); });
+window.addEventListener("pagehide", sendAbandon);
 
 function flattenAns() {
   const out = {};
