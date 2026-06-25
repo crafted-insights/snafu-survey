@@ -325,7 +325,8 @@ async function loadData() {
       const obj = {};
       headers.forEach((h, i) => { obj[h] = (r[i] || "").trim(); });
       return obj;
-    });
+    }).filter(r => r.submitted_at);
+    if (!records.length) { showEmpty(); return; }
     renderDashboard(records);
   } catch (err) {
     console.error(err);
