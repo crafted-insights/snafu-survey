@@ -241,7 +241,7 @@ textarea::placeholder,input[type=text]::placeholder{color:var(--muted)}
   <div class="intro" id="intro">
     <span class="intro-tag">About 5 minutes</span>
     <h1>Help us make Snafu even better.</h1>
-    <p>Thanks for stopping by! Take our quick 5-minute survey and enjoy $5 off your tab today. Your honest feedback helps us create an even better Snafu experience.</p>
+    <p>Thanks for stopping by! Take our quick 5-minute survey and enjoy <strong>$5 off your tab today</strong>. Your honest feedback helps us create an even better Snafu experience.</p>
     <div class="reward-card">
       <div class="lbl">Complete for</div>
       <div class="val">$5 off your tab</div>
@@ -265,7 +265,7 @@ textarea::placeholder,input[type=text]::placeholder{color:var(--muted)}
       </svg>
     </div>
     <h1>Thanks for your feedback!</h1>
-    <p>Show this screen (or a screenshot of it) to your bartender when you check out today to receive $5 off your tab.</p>
+    <p>Show this screen (or a screenshot of it) to your bartender when you check out today to receive <strong>$5 off your tab</strong>.</p>
     <div class="live-card">
       <div class="live-head">
         <span class="live-tag"><span class="pulse"></span>Live - verified</span>
@@ -299,7 +299,7 @@ const CONFIG = {
 const SURVEY = [
   {
     id: "visit_freq",
-    type: "multi",
+    type: "single",
     q: "How often do you visit Snafu?",
     options: ["It's my first time","A few times per year","Monthly","Weekly or more"],
     required: true
