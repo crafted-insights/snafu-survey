@@ -241,12 +241,12 @@ textarea::placeholder,input[type=text]::placeholder{color:var(--muted)}
   <div class="intro" id="intro">
     <span class="intro-tag">About 5 minutes</span>
     <h1>Help us make Snafu even better.</h1>
-    <p>Thanks for coming in. Answer a few quick questions and get $5 off your tab today. Cheers!</p>
+    <p>Thanks for stopping by! Take our quick 5-minute survey and enjoy $5 off your tab today. Your honest feedback helps us create an even better Snafu experience.</p>
     <div class="reward-card">
       <div class="lbl">Complete for</div>
       <div class="val">$5 off your tab</div>
     </div>
-    <button class="btn-start" id="btnStart">Let's go</button>
+    <button class="btn-start" id="btnStart">Let's Do It</button>
   </div>
 
   <!-- Survey -->
@@ -264,8 +264,8 @@ textarea::placeholder,input[type=text]::placeholder{color:var(--muted)}
         <path d="M20 6 9 17l-5-5"/>
       </svg>
     </div>
-    <h1>You're all done!</h1>
-    <p>Thanks for taking the time. Show this screen to your bartender for $5 off your tab.</p>
+    <h1>Thanks for your feedback!</h1>
+    <p>Show this screen (or a screenshot of it) to your bartender when you check out today to receive $5 off your tab.</p>
     <div class="live-card">
       <div class="live-head">
         <span class="live-tag"><span class="pulse"></span>Live - verified</span>
@@ -277,7 +277,7 @@ textarea::placeholder,input[type=text]::placeholder{color:var(--muted)}
         <div class="reward-proof">
           <div class="lbl">Show your bartender</div>
           <div class="code" id="code">0000</div>
-          <div class="desc">$5 off your tab today</div>
+          <div class="desc">for $5 off your tab <strong>today</strong></div>
         </div>
       </div>
     </div>
@@ -300,7 +300,6 @@ const SURVEY = [
   {
     id: "visit_freq",
     type: "multi",
-    section: "Your Visit",
     q: "How often do you visit Snafu?",
     options: ["It's my first time","A few times per year","Monthly","Weekly or more"],
     required: true
@@ -308,50 +307,41 @@ const SURVEY = [
   {
     id: "visit_reason",
     type: "multi",
-    section: "Your Visit",
     q: "What brought you in today?",
     hint: "Pick all that apply.",
-    options: ["New beers","An event","Friends and family","Work nearby","Habit / regular spot","Picking up to-go beer"],
+    options: ["It's my regular spot","An event","To try new beers","Friends or family invited me","I work or live nearby","To pick up beer to go","I saw you on social media","I was just in the area"],
     hasOther: true,
-    shuffle: true,
     required: true
   },
   {
     id: "heard_via",
-    type: "multi",
-    section: "How You Found Us",
+    type: "single",
     q: "How did you first hear about Snafu?",
-    hint: "Pick all that apply.",
-    options: ["Friend recommendation","Google search","Social media","Drove by","Tried your beer at another bar or restaurant","An AI assistant (ChatGPT, Claude, etc.)","Event listing"],
+    options: ["Social media","A friend or family member","I drove by","Google","An event listing or community calendar","I tried your beer at another bar or restaurant","An AI assistant (ChatGPT, Claude, etc.)","At a beer festival or community event","A review site (Untappd, Yelp, TripAdvisor, etc.)"],
     hasOther: true,
-    shuffle: true,
     required: true
   },
   {
     id: "associations",
     type: "multi",
-    section: "How You Found Us",
-    q: "What do you most associate Snafu with?",
+    q: "When you think of Snafu, what comes to mind?",
     hint: "Pick all that apply.",
-    options: ["Sour beers","Fun atmosphere","Cool events","Dog-friendly","The games"],
+    options: ["Fruited sour beers","Trying new and unique beers","Creative beer flavors","A fun atmosphere","Events and activities","Games and entertainment","Dog-friendly","Friendly staff","Supporting a local brewery"],
     hasOther: true,
-    shuffle: true,
     required: false
   },
   {
     id: "social_follow",
     type: "multi",
-    section: "How You Found Us",
-    q: "Do you follow Snafu on social media or belong to our text club?",
+    q: "Which of these are you connected with?",
     hint: "Pick all that apply.",
-    options: ["Yes, Instagram","Yes, Facebook","Yes, Text Club","Not yet, but I will!"],
+    options: ["I follow Snafu on Instagram","I follow Snafu on Facebook","I receive your text messages","I receive your emails","None of the above","Not yet, but I'd like to connect!"],
     required: false
   },
   {
     id: "overall_satisfaction",
     type: "scale",
     min: 1, max: 5,
-    section: "Your Experience",
     q: "Overall, how satisfied are you with today's visit?",
     low: "Very dissatisfied",
     high: "Very satisfied",
@@ -360,11 +350,11 @@ const SURVEY = [
   {
     id: "ratings",
     type: "matrix",
-    section: "Your Experience",
     q: "Rate each of the following.",
     hint: "1 = poor, 5 = excellent",
     items: [
       { key: "beer_selection", label: "Beer selection" },
+      { key: "beer_quality",   label: "Beer quality" },
       { key: "staff",          label: "Staff" },
       { key: "atmosphere",     label: "Atmosphere" },
       { key: "value",          label: "Value" },
@@ -375,7 +365,6 @@ const SURVEY = [
   {
     id: "love_most",
     type: "text",
-    section: "Your Experience",
     q: "What do you love most about Snafu?",
     placeholder: "Tell us...",
     required: true
@@ -383,8 +372,7 @@ const SURVEY = [
   {
     id: "improve",
     type: "text",
-    section: "Your Experience",
-    q: "What would improve your experience most?",
+    q: "What would improve your experience the most?",
     placeholder: "Tell us...",
     required: true
   },
@@ -392,7 +380,6 @@ const SURVEY = [
     id: "nps",
     type: "scale",
     min: 1, max: 10,
-    section: "Coming Back",
     q: "How likely are you to recommend Snafu to a friend?",
     low: "Not likely",
     high: "Very likely",
@@ -401,31 +388,26 @@ const SURVEY = [
   {
     id: "visit_more",
     type: "multi",
-    section: "Coming Back",
-    q: "What would get you to visit more often?",
+    q: "What would encourage you to visit Snafu more often?",
     hint: "Pick all that apply.",
-    options: ["More events","More food options","Longer hours","Nothing, I'm already here a lot"],
+    options: ["More events","More food options","New beer releases more often","Live music or entertainment","Longer hours","More specials or promotions","Nothing, I'm already here often"],
     hasOther: true,
     required: false
   },
   {
     id: "take_home",
-    type: "multi",
-    section: "Coming Back",
-    q: "Did you, or would you, buy cans, crowlers, or merch to take home?",
-    hint: "Pick all that apply.",
-    options: ["Yes, today","Yes, in the past","No, not this time"],
+    type: "single",
+    q: "What are you most likely to purchase to take home?",
+    options: ["Packaged beer (cans or crowlers)","Merchandise","Both","I'm unlikely to purchase to-go items"],
     required: false
   },
   {
     id: "zip_code",
     type: "text",
-    section: "About You",
     q: "What's your zip code?",
-    hint: "Helps us understand how far people travel to visit.",
     placeholder: "e.g. 12345",
     singleLine: true,
-    required: false
+    required: true
   }
 ];
 
@@ -487,8 +469,7 @@ function render() {
   qs("#back").disabled = step === 0;
   qs("#next").textContent = step === total - 1 ? "Submit" : "Next";
 
-  let h = `<div class="section-tag">${q.section || ""}</div>`;
-  h += `<div class="q-text">${q.q}</div>`;
+  let h = `<div class="q-text">${q.q}</div>`;
   if (q.hint) h += `<div class="q-hint">${q.hint}</div>`;
 
   if      (q.type === "single")  h += buildSingle(q);
