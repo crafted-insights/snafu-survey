@@ -494,7 +494,7 @@ function renderDashboard(records) {
     <div class="chart-card">
       <div class="stat-n">n=${cnt("associations")}</div>
       <h3>Brand Associations</h3>
-      <div class="q-label">What do you most associate Snafu with? (multi-select)</div>
+      <div class="q-label">When you think of Snafu, what comes to mind? (multi-select)</div>
       <div class="chart-wrap"><canvas id="cAssoc"></canvas></div>
     </div>
 
@@ -502,7 +502,7 @@ function renderDashboard(records) {
     <div class="chart-card">
       <div class="stat-n">n=${cnt("social_follow")}</div>
       <h3>Social Media Following</h3>
-      <div class="q-label">Do you follow Snafu on social media or belong to our text club?</div>
+      <div class="q-label">Which of these are you connected with? (multi-select)</div>
       <div class="chart-wrap short"><canvas id="cSocial"></canvas></div>
     </div>
 
@@ -533,8 +533,8 @@ function renderDashboard(records) {
     <!-- What would get them to visit more -->
     <div class="chart-card">
       <div class="stat-n">n=${cnt("visit_more")}</div>
-      <h3>Barriers to Visiting More</h3>
-      <div class="q-label">What would get you to visit more often?</div>
+      <h3>What Would Encourage More Visits</h3>
+      <div class="q-label">What would encourage you to visit Snafu more often? (multi-select)</div>
       <div class="chart-wrap"><canvas id="cVisitMore"></canvas></div>
     </div>
 
@@ -542,7 +542,7 @@ function renderDashboard(records) {
     <div class="chart-card">
       <div class="stat-n">n=${cnt("take_home")}</div>
       <h3>To-Go Purchases</h3>
-      <div class="q-label">Did you, or would you, buy cans, crowlers, or merch to take home?</div>
+      <div class="q-label">What are you most likely to purchase to take home?</div>
       <div class="chart-wrap short"><canvas id="cTakeHome"></canvas></div>
     </div>
 
@@ -637,8 +637,8 @@ function renderDashboard(records) {
   vbar("cSatDist", ["1","2","3","4","5"], satDist, satColors);
 
   /* Ratings matrix */
-  const ratingKeys = ["beer_selection","staff","atmosphere","value","cleanliness"];
-  const ratingLabels = ["Beer selection","Staff","Atmosphere","Value","Cleanliness"];
+  const ratingKeys = ["beer_selection","beer_quality","staff","atmosphere","value","cleanliness"];
+  const ratingLabels = ["Beer selection","Beer quality","Staff","Atmosphere","Value","Cleanliness"];
   const ratingAvgs = ratingKeys.map(k => {
     const vals = nums("ratings_" + k);
     return vals.length ? parseFloat((vals.reduce((s,v)=>s+v,0)/vals.length).toFixed(2)) : 0;
@@ -742,11 +742,11 @@ function escHtml(s) {
    ============================================================ */
 function demoData() {
   const base = [
-    { submitted_at:"2026-06-10T19:30:00Z", visit_freq:"Monthly", visit_reason:"New beers, Friends and family", heard_via:"Friend recommendation", associations:"Sour beers, Fun atmosphere", social_follow:"Yes, Instagram", overall_satisfaction:"5", ratings_beer_selection:"5", ratings_staff:"4", ratings_atmosphere:"5", ratings_value:"4", ratings_cleanliness:"5", love_most:"The sour beer selection is unreal.", improve:"More food options would be great.", nps:"10", visit_more:"More food options", take_home:"Yes, today", zip_code:"12345" },
-    { submitted_at:"2026-06-10T20:15:00Z", visit_freq:"A few times per year", visit_reason:"An event", heard_via:"Social media", associations:"Cool events", social_follow:"Yes, Instagram, Yes, Facebook", overall_satisfaction:"4", ratings_beer_selection:"4", ratings_staff:"5", ratings_atmosphere:"4", ratings_value:"3", ratings_cleanliness:"4", love_most:"Staff is always so friendly.", improve:"Longer hours on weekends.", nps:"8", visit_more:"Longer hours", take_home:"Yes, in the past", zip_code:"12346" },
-    { submitted_at:"2026-06-11T18:00:00Z", visit_freq:"Weekly or more", visit_reason:"Habit / regular spot", heard_via:"Drove by", associations:"Dog-friendly, The games", social_follow:"Yes, Text Club", overall_satisfaction:"5", ratings_beer_selection:"5", ratings_staff:"5", ratings_atmosphere:"5", ratings_value:"5", ratings_cleanliness:"5", love_most:"This is my living room. Perfect vibe every time.", improve:"", nps:"10", visit_more:"Nothing, I'm already here a lot", take_home:"Yes, today", zip_code:"12345" },
-    { submitted_at:"2026-06-11T19:45:00Z", visit_freq:"It's my first time", visit_reason:"Friends and family", heard_via:"Friend recommendation", associations:"Fun atmosphere, Sour beers", social_follow:"Not yet, but I will!", overall_satisfaction:"4", ratings_beer_selection:"4", ratings_staff:"4", ratings_atmosphere:"5", ratings_value:"4", ratings_cleanliness:"4", love_most:"Great first time. Will be back!", improve:"Could use more seating.", nps:"9", visit_more:"More events", take_home:"No, not this time", zip_code:"12350" },
-    { submitted_at:"2026-06-12T17:30:00Z", visit_freq:"Monthly", visit_reason:"New beers, Work nearby", heard_via:"Google search", associations:"Sour beers", social_follow:"Yes, Instagram", overall_satisfaction:"3", ratings_beer_selection:"4", ratings_staff:"3", ratings_atmosphere:"3", ratings_value:"2", ratings_cleanliness:"4", love_most:"The beer selection is top notch.", improve:"Better value for the price.", nps:"6", visit_more:"More food options", take_home:"No, not this time", zip_code:"12347" },
+    { submitted_at:"2026-06-10T19:30:00Z", visit_freq:"Monthly", visit_reason:"It's my regular spot, To try new beers", heard_via:"A friend or family member", associations:"Fruited sour beers, A fun atmosphere", social_follow:"I follow Snafu on Instagram", overall_satisfaction:"5", ratings_beer_selection:"5", ratings_beer_quality:"5", ratings_staff:"4", ratings_atmosphere:"5", ratings_value:"4", ratings_cleanliness:"5", love_most:"The sour beer selection is unreal.", improve:"More food options would be great.", nps:"10", visit_more:"More food options", take_home:"Packaged beer (cans or crowlers)", zip_code:"12345" },
+    { submitted_at:"2026-06-10T20:15:00Z", visit_freq:"A few times per year", visit_reason:"An event", heard_via:"Social media", associations:"Events and activities", social_follow:"I follow Snafu on Instagram, I follow Snafu on Facebook", overall_satisfaction:"4", ratings_beer_selection:"4", ratings_beer_quality:"4", ratings_staff:"5", ratings_atmosphere:"4", ratings_value:"3", ratings_cleanliness:"4", love_most:"Staff is always so friendly.", improve:"Longer hours on weekends.", nps:"8", visit_more:"Longer hours", take_home:"I'm unlikely to purchase to-go items", zip_code:"12346" },
+    { submitted_at:"2026-06-11T18:00:00Z", visit_freq:"Weekly or more", visit_reason:"It's my regular spot", heard_via:"I drove by", associations:"Dog-friendly, Games and entertainment", social_follow:"I receive your text messages", overall_satisfaction:"5", ratings_beer_selection:"5", ratings_beer_quality:"5", ratings_staff:"5", ratings_atmosphere:"5", ratings_value:"5", ratings_cleanliness:"5", love_most:"This is my living room. Perfect vibe every time.", improve:"", nps:"10", visit_more:"Nothing, I'm already here often", take_home:"Packaged beer (cans or crowlers)", zip_code:"12345" },
+    { submitted_at:"2026-06-11T19:45:00Z", visit_freq:"It's my first time", visit_reason:"Friends or family invited me", heard_via:"A friend or family member", associations:"A fun atmosphere, Fruited sour beers", social_follow:"Not yet, but I'd like to connect!", overall_satisfaction:"4", ratings_beer_selection:"4", ratings_beer_quality:"4", ratings_staff:"4", ratings_atmosphere:"5", ratings_value:"4", ratings_cleanliness:"4", love_most:"Great first time. Will be back!", improve:"Could use more seating.", nps:"9", visit_more:"More events", take_home:"I'm unlikely to purchase to-go items", zip_code:"12350" },
+    { submitted_at:"2026-06-12T17:30:00Z", visit_freq:"Monthly", visit_reason:"To try new beers, I work or live nearby", heard_via:"Google", associations:"Fruited sour beers", social_follow:"I follow Snafu on Instagram", overall_satisfaction:"3", ratings_beer_selection:"4", ratings_beer_quality:"3", ratings_staff:"3", ratings_atmosphere:"3", ratings_value:"2", ratings_cleanliness:"4", love_most:"The beer selection is top notch.", improve:"Better value for the price.", nps:"6", visit_more:"More food options", take_home:"Packaged beer (cans or crowlers)", zip_code:"12347" },
   ];
   return base;
 }
