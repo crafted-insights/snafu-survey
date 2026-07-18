@@ -381,6 +381,7 @@ const PALETTE = ["#5EDDD8","#C255B4","#4ade80","#fb923c","#818cf8","#f472b6","#3
    RENDER DASHBOARD
    ============================================================ */
 function renderDashboard(records) {
+  records = records.filter(r => r.status === "completed" || r.status === "abandoned");
   const n = records.length;
 
   /* helpers */
