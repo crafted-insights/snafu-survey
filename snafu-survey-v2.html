@@ -240,8 +240,8 @@ textarea::placeholder,input[type=text]::placeholder{color:var(--muted)}
   <!-- Intro screen -->
   <div class="intro" id="intro">
     <span class="intro-tag">About 5 minutes</span>
-    <h1>Help us make Snafu even better.</h1>
-    <p>Thanks for stopping by! Take our quick 5-minute survey and enjoy <strong>$5 off your tab today</strong>. Your honest feedback helps us create an even better Snafu experience.</p>
+    <h1>Thanks for coming to Snafu!</h1>
+    <p>This quick 5-minute survey helps us make your next visit even better. Complete it for <strong>$5 off your tab today</strong> &ndash; just show a bartender your completed survey screen. Cheers!</p>
     <div class="reward-card">
       <div class="lbl">Complete for</div>
       <div class="val">$5 off your tab</div>
@@ -264,8 +264,9 @@ textarea::placeholder,input[type=text]::placeholder{color:var(--muted)}
         <path d="M20 6 9 17l-5-5"/>
       </svg>
     </div>
-    <h1>Thanks for your feedback!</h1>
-    <p>Show this screen (or a screenshot of it) to your bartender when you check out today to receive <strong>$5 off your tab</strong>.</p>
+    <h1>Thanks for taking the time to help us out.</h1>
+    <p>Show your bartender this screen for your <strong>$5 off</strong>.</p>
+    <p>See you again soon at Snafu!</p>
     <div class="live-card">
       <div class="live-head">
         <span class="live-tag"><span class="pulse"></span>Live - verified</span>
@@ -298,9 +299,11 @@ const CONFIG = {
    types: single | multi | scale | matrix | text
    ============================================================ */
 const SURVEY = [
+  /* ---------- SECTION 1: YOUR VISIT ---------- */
   {
     id: "visit_freq",
     type: "single",
+    section: "Your Visit",
     q: "How often do you visit Snafu?",
     options: ["It's my first time","A few times per year","Monthly","Weekly or more"],
     required: true
@@ -308,40 +311,47 @@ const SURVEY = [
   {
     id: "visit_reason",
     type: "multi",
+    section: "Your Visit",
     q: "What brought you in today?",
     hint: "Pick all that apply.",
-    options: ["It's my regular spot","An event","To try new beers","Friends or family invited me","I work or live nearby","To pick up beer to go","I saw you on social media","I was just in the area"],
+    options: ["New beers","An event","Friends & family","Work nearby","Habit / regular spot","Picking up to-go beer"],
     hasOther: true,
     required: true
   },
+  /* ---------- SECTION 2: HOW YOU FOUND US ---------- */
   {
     id: "heard_via",
     type: "single",
+    section: "How You Found Us",
     q: "How did you first hear about Snafu?",
-    options: ["Social media","A friend or family member","I drove by","Google","An event listing or community calendar","I tried your beer at another bar or restaurant","An AI assistant (ChatGPT, Claude, etc.)","At a beer festival or community event","Untappd","A review site (Yelp, TripAdvisor, etc.)"],
+    options: ["Friend recommendation","Google search","Social media","Drove by","An AI assistant (e.g., ChatGPT, Claude, Gemini)","Event listing","Tried your beer at a bar or restaurant","Untappd"],
     hasOther: true,
     required: true
   },
   {
     id: "associations",
     type: "multi",
-    q: "When you think of Snafu, what comes to mind?",
+    section: "How You Found Us",
+    q: "What do you most associate Snafu with?",
     hint: "Pick all that apply.",
-    options: ["Fruited sour beers","Trying new and unique beers","Creative beer flavors","A fun atmosphere","Events and activities","Games and entertainment","Dog-friendly","Friendly staff","Supporting a local brewery"],
+    options: ["Sour beers","Fun atmosphere","Cool events","Dog-friendly","The games"],
     hasOther: true,
     required: false
   },
   {
     id: "social_follow",
     type: "multi",
-    q: "Which of these are you connected with?",
+    section: "How You Found Us",
+    q: "Do you follow Snafu on social media or belong to our text club?",
     hint: "Pick all that apply.",
-    options: ["I follow Snafu on Instagram","I follow Snafu on Facebook","I receive your text messages","I receive your emails","None of the above","Not yet, but I'd like to connect!"],
+    options: ["Yes — Instagram","Yes — Facebook","Yes — Text Club","Yes — Other","Not yet, but I will!","None of the above"],
     required: false
   },
+  /* ---------- SECTION 3: YOUR EXPERIENCE ---------- */
   {
     id: "overall_satisfaction",
     type: "scale",
+    section: "Your Experience",
     min: 1, max: 5,
     q: "Overall, how satisfied are you with today's visit?",
     low: "Very dissatisfied",
@@ -351,21 +361,22 @@ const SURVEY = [
   {
     id: "ratings",
     type: "matrix",
-    q: "Rate each of the following.",
+    section: "Your Experience",
+    q: "Please rate each of the following.",
     hint: "1 = poor, 5 = excellent",
     items: [
-      { key: "beer_selection", label: "Beer selection" },
-      { key: "beer_quality",   label: "Beer quality" },
-      { key: "staff",          label: "Staff" },
-      { key: "atmosphere",     label: "Atmosphere" },
-      { key: "comfort",        label: "Comfort (temperature / seating)" },
-      { key: "value",          label: "Value" }
+      { key: "beer",             label: "Beer" },
+      { key: "staff_engagement", label: "Staff Engagement" },
+      { key: "atmosphere",       label: "Atmosphere" },
+      { key: "comfort",          label: "Comfort (temperature / seating)" },
+      { key: "value",            label: "Value" }
     ],
     required: true
   },
   {
     id: "love_most",
     type: "text",
+    section: "Your Experience",
     q: "What do you love most about Snafu?",
     placeholder: "Tell us...",
     required: true
@@ -373,31 +384,36 @@ const SURVEY = [
   {
     id: "improve",
     type: "text",
-    q: "What would improve your experience the most?",
+    section: "Your Experience",
+    q: "What would improve your experience most?",
     placeholder: "Tell us...",
     required: true
   },
+  /* ---------- SECTION 4: COMING BACK & TAKING SNAFU HOME ---------- */
   {
     id: "nps",
     type: "scale",
-    min: 1, max: 10,
+    section: "Coming Back & Taking Snafu Home",
+    min: 0, max: 10,
     q: "How likely are you to recommend Snafu to a friend?",
-    low: "Not likely",
-    high: "Very likely",
+    low: "0 = Not at all likely",
+    high: "10 = Extremely likely",
     required: true
   },
   {
     id: "visit_more",
     type: "multi",
-    q: "What would encourage you to visit Snafu more often?",
+    section: "Coming Back & Taking Snafu Home",
+    q: "What would get you to visit more often?",
     hint: "Pick all that apply.",
-    options: ["More events","More food options","New beer releases more often","Live music or entertainment","Longer hours","More specials or promotions","Nothing, I'm already here often"],
+    options: ["More events","More food options","Longer hours","Live music or entertainment","More specials or promotions","Nothing — I'm already here a lot"],
     hasOther: true,
     required: false
   },
   {
     id: "event_prefs",
     type: "multi",
+    section: "Coming Back & Taking Snafu Home",
     q: "What kind of events would get you out to Snafu?",
     hint: "Pick all that apply.",
     options: ["Trivia nights","Live music","Food truck nights","New beer release parties","Sports viewing","Comedy / open mic","Vendor & maker markets","Fundraisers / charity nights"],
@@ -407,32 +423,40 @@ const SURVEY = [
   {
     id: "take_home",
     type: "single",
-    q: "What are you most likely to purchase to take home?",
-    options: ["Packaged beer (cans or crowlers)","Merchandise","Both","I'm unlikely to purchase to-go items"],
+    section: "Coming Back & Taking Snafu Home",
+    q: "Did you, or would you, buy cans, crowlers, or merch to take home?",
+    options: ["Yes, today","Yes, in the past"],
+    hasOther: true,
+    otherLabel: "Unlikely — why not?",
+    otherPlaceholder: "Why not?",
     required: false
   },
   {
     id: "membership_interest",
     type: "single",
-    q: "Would you be interested in a Snafu membership program?",
-    hint: "Perks like discounts, loyalty rewards, and member-only releases.",
-    options: ["Yes, sign me up","Maybe, tell me more","Not right now"],
+    section: "Coming Back & Taking Snafu Home",
+    q: "Would you be interested in a Snafu membership program (perks like discounts, loyalty rewards, and member-only releases)?",
+    options: ["Yes — sign me up","Maybe — tell me more","Not right now"],
     required: false
   },
   {
     id: "membership_perks",
     type: "multi",
+    section: "Coming Back & Taking Snafu Home",
     q: "What would matter most in a membership?",
     hint: "Pick all that apply.",
-    options: ["Discounted beer / merch","Free gift (e.g., mug, member-exclusive shirt)","Member-only releases","Member-only events","A punch card / rewards for visits"],
+    options: ["Discounted beer / merch","Free gift (e.g., mug, member-exclusive shirt)","Member Only releases","Member-only events","A punch card / rewards for visits"],
     hasOther: true,
     required: false,
-    showIf: () => ["Yes, sign me up","Maybe, tell me more"].includes(ans.membership_interest)
+    showIf: () => ["Yes — sign me up","Maybe — tell me more"].includes(ans.membership_interest)
   },
+  /* ---------- SECTION 5: ABOUT YOU ---------- */
   {
     id: "zip_code",
     type: "text",
+    section: "About You",
     q: "What's your zip code?",
+    hint: "Helps us understand how far people travel to visit.",
     placeholder: "e.g. 12345",
     singleLine: true,
     required: true
@@ -508,7 +532,8 @@ function render() {
   qs("#back").disabled = nextShown(step, -1) < 0;
   qs("#next").textContent = nextShown(step, 1) < 0 ? "Submit" : "Next";
 
-  let h = `<div class="q-text">${q.q}</div>`;
+  let h = q.section ? `<div class="section-tag">${q.section}</div>` : "";
+  h += `<div class="q-text">${q.q}</div>`;
   if (q.hint) h += `<div class="q-hint">${q.hint}</div>`;
 
   if      (q.type === "single")  h += buildSingle(q);
@@ -526,6 +551,8 @@ function x(s) {
   return String(s).replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/</g,"&lt;");
 }
 
+const otherLabel = q => q.otherLabel || "Other";
+
 function buildSingle(q) {
   const cur = ans[q.id];
   let h = `<div class="opts">`;
@@ -533,9 +560,9 @@ function buildSingle(q) {
     h += `<button class="opt ${cur===o?"sel":""}" data-v="${x(o)}"><span class="opt-dot"></span>${o}</button>`
   );
   if (q.hasOther) {
-    const os = cur === "Other";
-    h += `<button class="opt ${os?"sel":""}" data-v="Other"><span class="opt-dot"></span>Other</button>`;
-    if (os) h += `<input type="text" class="other-field" id="otf" placeholder="Please specify..." value="${x(ans[q.id+"_other"]||"")}">`;
+    const ol = otherLabel(q), os = cur === ol;
+    h += `<button class="opt ${os?"sel":""}" data-v="${x(ol)}"><span class="opt-dot"></span>${ol}</button>`;
+    if (os) h += `<input type="text" class="other-field" id="otf" placeholder="${x(q.otherPlaceholder||"Please specify...")}" value="${x(ans[q.id+"_other"]||"")}">`;
   }
   return h + `</div>`;
 }
@@ -547,9 +574,9 @@ function buildMulti(q) {
     h += `<button class="opt ${cur.includes(o)?"sel":""}" data-v="${x(o)}"><span class="opt-dot"></span>${o}</button>`
   );
   if (q.hasOther) {
-    const os = cur.includes("Other");
-    h += `<button class="opt ${os?"sel":""}" data-v="Other"><span class="opt-dot"></span>Other</button>`;
-    if (os) h += `<input type="text" class="other-field" id="otf" placeholder="Please specify..." value="${x(ans[q.id+"_other"]||"")}">`;
+    const ol = otherLabel(q), os = cur.includes(ol);
+    h += `<button class="opt ${os?"sel":""}" data-v="${x(ol)}"><span class="opt-dot"></span>${ol}</button>`;
+    if (os) h += `<input type="text" class="other-field" id="otf" placeholder="${x(q.otherPlaceholder||"Please specify...")}" value="${x(ans[q.id+"_other"]||"")}">`;
   }
   return h + `</div>`;
 }
@@ -636,7 +663,8 @@ function isAnswered(q) {
   const a = ans[q.id];
 
   if (q.hasOther) {
-    const otherSelected = q.type === "multi" ? (a && a.includes("Other")) : a === "Other";
+    const ol = otherLabel(q);
+    const otherSelected = q.type === "multi" ? (a && a.includes(ol)) : a === ol;
     if (otherSelected && !ans[q.id + "_other"]) return false;
   }
 
