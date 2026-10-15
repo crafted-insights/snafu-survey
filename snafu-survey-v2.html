@@ -325,6 +325,7 @@ const SURVEY = [
     section: "How You Found Us",
     q: "How did you first hear about Snafu?",
     options: ["Friend recommendation","Google search","Social media","Drove by","An AI assistant (e.g., ChatGPT, Claude, Gemini)","Event listing","Tried your beer at a bar or restaurant","Untappd"],
+    shuffle: true,
     hasOther: true,
     required: true
   },
@@ -424,11 +425,8 @@ const SURVEY = [
     id: "take_home",
     type: "single",
     section: "Coming Back & Taking Snafu Home",
-    q: "Did you, or would you, buy cans, crowlers, or merch to take home?",
-    options: ["Yes, today","Yes, in the past"],
-    hasOther: true,
-    otherLabel: "Unlikely — why not?",
-    otherPlaceholder: "Why not?",
+    q: "What are you most likely to purchase to take home?",
+    options: ["Packaged beer (cans or crowlers)","Merchandise","Both","I'm unlikely to purchase to-go items"],
     required: false
   },
   {
