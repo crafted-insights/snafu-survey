@@ -343,9 +343,11 @@ const SURVEY = [
     id: "social_follow",
     type: "multi",
     section: "How You Found Us",
-    q: "Do you follow Snafu on social media or belong to our text club?",
+    q: "How do you keep up with Snafu Brewing Company?",
     hint: "Pick all that apply.",
-    options: ["Yes — Instagram","Yes — Facebook","Yes — Text Club","Yes — Other","Not yet, but I will!","None of the above"],
+    options: ["I follow you on Instagram","I follow you on Facebook","I follow you on TikTok","I get your texts","I get your emails"],
+    hasOther: true,
+    afterOther: ["None of the above"],
     required: false
   },
   /* ---------- SECTION 3: YOUR EXPERIENCE ---------- */
@@ -407,7 +409,7 @@ const SURVEY = [
     section: "Coming Back & Taking Snafu Home",
     q: "What would get you to visit more often?",
     hint: "Pick all that apply.",
-    options: ["More events","More food options","Longer hours","Live music or entertainment","More specials or promotions","Nothing — I'm already here a lot"],
+    options: ["More events","More food options","Longer hours","More specials or promotions","Nothing — I'm already here a lot"],
     hasOther: true,
     required: false
   },
@@ -415,7 +417,7 @@ const SURVEY = [
     id: "event_prefs",
     type: "multi",
     section: "Coming Back & Taking Snafu Home",
-    q: "What kind of events would get you out to Snafu?",
+    q: "What kinds of events would you like to see at Snafu?",
     hint: "Pick all that apply.",
     options: ["Trivia nights","Live music","Food truck nights","New beer release parties","Sports viewing","Comedy / open mic","Vendor & maker markets","Fundraisers / charity nights"],
     hasOther: true,
@@ -576,6 +578,9 @@ function buildMulti(q) {
     h += `<button class="opt ${os?"sel":""}" data-v="${x(ol)}"><span class="opt-dot"></span>${ol}</button>`;
     if (os) h += `<input type="text" class="other-field" id="otf" placeholder="${x(q.otherPlaceholder||"Please specify...")}" value="${x(ans[q.id+"_other"]||"")}">`;
   }
+  (q.afterOther || []).forEach(o =>
+    h += `<button class="opt ${cur.includes(o)?"sel":""}" data-v="${x(o)}"><span class="opt-dot"></span>${o}</button>`
+  );
   return h + `</div>`;
 }
 
