@@ -151,13 +151,13 @@ body{
 .mbtn.sel{background:var(--teal);color:#000;border-color:var(--teal)}
 
 /* ---- Text ---- */
-textarea,input[type=text]{
+textarea,input[type=text],input[type=email],input[type=tel]{
   width:100%;background:var(--surface2);border:1.5px solid var(--line);
   border-radius:12px;padding:14px 16px;
   font-size:15px;color:var(--text);font-family:inherit;resize:none;
 }
-textarea:focus,input[type=text]:focus{outline:none;border-color:var(--teal)}
-textarea::placeholder,input[type=text]::placeholder{color:var(--muted)}
+textarea:focus,input[type=text]:focus,input[type=email]:focus,input[type=tel]:focus{outline:none;border-color:var(--teal)}
+textarea::placeholder,input[type=text]::placeholder,input[type=email]::placeholder,input[type=tel]::placeholder{color:var(--muted)}
 
 /* ---- Nav ---- */
 .nav{
@@ -303,7 +303,6 @@ const SURVEY = [
   {
     id: "visit_freq",
     type: "single",
-    section: "Your Visit",
     q: "How often do you visit Snafu?",
     options: ["It's my first time","A few times per year","Monthly","Weekly or more"],
     required: true
@@ -311,7 +310,6 @@ const SURVEY = [
   {
     id: "visit_reason",
     type: "multi",
-    section: "Your Visit",
     q: "What brought you in today?",
     hint: "Pick all that apply.",
     options: ["New beers","An event","Friends & family","Work nearby","Habit / regular spot","Picking up to-go beer"],
@@ -322,7 +320,6 @@ const SURVEY = [
   {
     id: "heard_via",
     type: "single",
-    section: "How You Found Us",
     q: "How did you first hear about Snafu?",
     options: ["Friend recommendation","Google search","Social media","Drove by","An AI assistant (e.g., ChatGPT, Claude, Gemini)","Event listing","Tried your beer at a bar or restaurant","Untappd"],
     shuffle: true,
@@ -332,7 +329,6 @@ const SURVEY = [
   {
     id: "associations",
     type: "multi",
-    section: "How You Found Us",
     q: "What do you most associate Snafu with?",
     hint: "Pick all that apply.",
     options: ["Sour beers","Fun atmosphere","Cool events","Dog-friendly","The games"],
@@ -342,7 +338,6 @@ const SURVEY = [
   {
     id: "social_follow",
     type: "multi",
-    section: "How You Found Us",
     q: "How do you keep up with Snafu Brewing Company?",
     hint: "Pick all that apply.",
     options: ["I follow you on Instagram","I follow you on Facebook","I follow you on TikTok","I get your texts","I get your emails"],
@@ -354,7 +349,6 @@ const SURVEY = [
   {
     id: "overall_satisfaction",
     type: "scale",
-    section: "Your Experience",
     min: 1, max: 5,
     q: "Overall, how satisfied are you with today's visit?",
     low: "Very dissatisfied",
@@ -364,7 +358,6 @@ const SURVEY = [
   {
     id: "ratings",
     type: "matrix",
-    section: "Your Experience",
     q: "Please rate each of the following.",
     hint: "1 = poor, 5 = excellent",
     items: [
@@ -379,7 +372,6 @@ const SURVEY = [
   {
     id: "love_most",
     type: "text",
-    section: "Your Experience",
     q: "What do you love most about Snafu?",
     placeholder: "Tell us...",
     required: true
@@ -387,7 +379,6 @@ const SURVEY = [
   {
     id: "improve",
     type: "text",
-    section: "Your Experience",
     q: "What would improve your experience most?",
     placeholder: "Tell us...",
     required: true
@@ -396,7 +387,6 @@ const SURVEY = [
   {
     id: "nps",
     type: "scale",
-    section: "Coming Back & Taking Snafu Home",
     min: 0, max: 10,
     q: "How likely are you to recommend Snafu to a friend?",
     low: "0 = Not at all likely",
@@ -406,60 +396,61 @@ const SURVEY = [
   {
     id: "visit_more",
     type: "multi",
-    section: "Coming Back & Taking Snafu Home",
     q: "What would get you to visit more often?",
     hint: "Pick all that apply.",
     options: ["More events","More food options","Longer hours","More specials or promotions","Nothing — I'm already here a lot"],
     hasOther: true,
-    required: false
+    required: true
   },
   {
     id: "event_prefs",
     type: "multi",
-    section: "Coming Back & Taking Snafu Home",
     q: "What kinds of events would you like to see at Snafu?",
     hint: "Pick all that apply.",
     options: ["Trivia nights","Live music","Food truck nights","New beer release parties","Sports viewing","Comedy / open mic","Vendor & maker markets","Fundraisers / charity nights"],
     hasOther: true,
-    required: false
+    required: true
   },
   {
     id: "take_home",
     type: "single",
-    section: "Coming Back & Taking Snafu Home",
     q: "What are you most likely to purchase to take home?",
     options: ["Packaged beer (cans or crowlers)","Merchandise","Both","I'm unlikely to purchase to-go items"],
-    required: false
+    required: true
   },
   {
     id: "membership_interest",
     type: "single",
-    section: "Coming Back & Taking Snafu Home",
     q: "Would you be interested in a Snafu membership program (perks like discounts, loyalty rewards, and member-only releases)?",
     options: ["Yes — sign me up","Maybe — tell me more","Not right now"],
-    required: false
+    required: true
   },
   {
     id: "membership_perks",
     type: "multi",
-    section: "Coming Back & Taking Snafu Home",
     q: "What would matter most in a membership?",
     hint: "Pick all that apply.",
-    options: ["Discounted beer / merch","Free gift (e.g., mug, member-exclusive shirt)","Member Only releases","Member-only events","A punch card / rewards for visits"],
+    options: ["Discounted beer / merch","Free gift (e.g., mug, member-exclusive shirt)","Member-only releases","Member-only events","A punch card / rewards for visits"],
     hasOther: true,
-    required: false,
+    required: true,
     showIf: () => ["Yes — sign me up","Maybe — tell me more"].includes(ans.membership_interest)
   },
   /* ---------- SECTION 5: ABOUT YOU ---------- */
   {
     id: "zip_code",
     type: "text",
-    section: "About You",
     q: "What's your zip code?",
     hint: "Helps us understand how far people travel to visit.",
     placeholder: "e.g. 12345",
     singleLine: true,
     required: true
+  },
+  {
+    id: "contact",
+    type: "contact",
+    q: "Share your info if you'd like to receive updates from Snafu.",
+    hint: "Optional.",
+    required: false
   }
 ];
 
@@ -532,8 +523,7 @@ function render() {
   qs("#back").disabled = nextShown(step, -1) < 0;
   qs("#next").textContent = nextShown(step, 1) < 0 ? "Submit" : "Next";
 
-  let h = q.section ? `<div class="section-tag">${q.section}</div>` : "";
-  h += `<div class="q-text">${q.q}</div>`;
+  let h = `<div class="q-text">${q.q}</div>`;
   if (q.hint) h += `<div class="q-hint">${q.hint}</div>`;
 
   if      (q.type === "single")  h += buildSingle(q);
@@ -541,6 +531,7 @@ function render() {
   else if (q.type === "scale")   h += buildScale(q);
   else if (q.type === "matrix")  h += buildMatrix(q);
   else if (q.type === "text")    h += buildText(q);
+  else if (q.type === "contact") h += buildContact(q);
 
   qs("#stage").innerHTML = h;
   attach(q);
@@ -609,6 +600,15 @@ function buildMatrix(q) {
   return h + `</div>`;
 }
 
+function buildContact(q) {
+  const cur = ans[q.id] || {};
+  return `<div class="opts">
+    <input type="email" id="cEmail" placeholder="Email (optional)" autocomplete="email" value="${x(cur.email||"")}">
+    <input type="tel" id="cPhone" placeholder="Phone (optional)" autocomplete="tel" value="${x(cur.phone||"")}">
+  </div>
+  <div class="q-hint" style="font-size:12px;margin-top:12px">By sharing your phone number, you agree to receive text messages from Snafu Brewing Company. Msg &amp; data rates may apply. Reply STOP to opt out.</div>`;
+}
+
 function buildText(q) {
   if (q.singleLine) {
     return `<input type="text" id="ta" placeholder="${x(q.placeholder||"")}" value="${x(ans[q.id]||"")}">`;
@@ -653,6 +653,14 @@ function attach(q) {
       });
     });
   }
+  if (q.type === "contact") {
+    [["#cEmail","email"],["#cPhone","phone"]].forEach(([sel,k]) => {
+      qs(sel).addEventListener("input", ev => {
+        ans[q.id] = { ...(ans[q.id] || {}), [k]: ev.target.value.trim() };
+        refreshNext(q);
+      });
+    });
+  }
   if (q.type === "text") {
     const ta = qs("#ta");
     if (ta) ta.addEventListener("input", ev => { ans[q.id] = ev.target.value; refreshNext(q); });
@@ -669,6 +677,13 @@ function isAnswered(q) {
     const ol = otherLabel(q);
     const otherSelected = q.type === "multi" ? (a && a.includes(ol)) : a === ol;
     if (otherSelected && !ans[q.id + "_other"]) return false;
+  }
+
+  if (q.type === "contact") {
+    const c = a || {};
+    if (c.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(c.email)) return false;
+    if (c.phone && !/^1?\d{10}$/.test(c.phone.replace(/\D/g, ""))) return false;
+    return true;
   }
 
   if (q.id === "zip_code" && a) {
