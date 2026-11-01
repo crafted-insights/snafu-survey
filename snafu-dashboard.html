@@ -124,12 +124,12 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:-apple-
 .responses-section h3{font-size:16px;font-weight:700;margin-bottom:4px}
 .responses-section p{font-size:13px;color:var(--muted);margin-bottom:16px}
 .resp-tabs{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap}
-.resp-tab{
+.resp-tab,.resp-tab2{
   background:var(--surface2);border:1px solid var(--line);
   border-radius:8px;padding:7px 14px;font-size:13px;font-weight:600;
   color:var(--muted);cursor:pointer;transition:.12s;
 }
-.resp-tab.active{background:var(--teal);color:#000;border-color:var(--teal)}
+.resp-tab.active,.resp-tab2.active{background:var(--teal);color:#000;border-color:var(--teal)}
 .resp-list{display:flex;flex-direction:column;gap:8px;max-height:400px;overflow-y:auto}
 .resp-item{
   background:var(--surface2);border:1px solid var(--line);
@@ -154,6 +154,17 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:-apple-
 .empty{text-align:center;padding:40px 24px;color:var(--muted);font-size:13px}
 
 .hidden{display:none!important}
+
+/* ---- Survey version tabs (v1 / v2) ---- */
+.survey-tabs{display:flex;gap:8px;margin-bottom:20px;border-bottom:1px solid var(--line)}
+.survey-tab{
+  background:none;border:none;border-bottom:2px solid transparent;
+  padding:10px 16px;margin-bottom:-1px;
+  font-size:13px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
+  color:var(--muted);cursor:pointer;transition:.12s;
+}
+.survey-tab:hover{color:var(--text)}
+.survey-tab.active{color:var(--teal);border-bottom-color:var(--teal)}
 
 /* ---- Redeem button ---- */
 .redeem-btn{
@@ -241,11 +252,24 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:-apple-
   </div>
 
   <div class="main" id="main">
-    <div class="loading" id="loadingState">
-      <div class="spin">o</div>
-      <div>Loading responses...</div>
+    <div class="survey-tabs">
+      <button class="survey-tab active" data-tab="v1">Survey v1</button>
+      <button class="survey-tab" data-tab="v2">Survey v2</button>
     </div>
-    <div id="dashContent" class="hidden"></div>
+    <div id="panelV1">
+      <div class="loading" id="loadingState">
+        <div class="spin">o</div>
+        <div>Loading responses...</div>
+      </div>
+      <div id="dashContent" class="hidden"></div>
+    </div>
+    <div id="panelV2" class="hidden">
+      <div class="loading" id="loadingStateV2">
+        <div class="spin">o</div>
+        <div>Loading responses...</div>
+      </div>
+      <div id="dashContentV2" class="hidden"></div>
+    </div>
   </div>
 </div>
 
@@ -300,7 +324,7 @@ document.getElementById("logoutBtn").addEventListener("click", () => {
   location.reload();
 });
 
-document.getElementById("refreshBtn").addEventListener("click", loadData);
+document.getElementById("refreshBtn").addEventListener("click", () => activeTab === "v2" ? loadDataV2() : loadData());
 
 /* ============================================================
    DATA LOADING
@@ -823,6 +847,382 @@ async function applyDiscount() {
    INIT
    ============================================================ */
 checkSession();
+</script>
+<script>
+/* ============================================================
+   SURVEY v2 TAB
+   Same cards, charts and math as v1, mapped to the v2 questions.
+   Data comes from the v2 Apps Script (?action=responses), which
+   never sends email/phone — only a contact_shared flag.
+   ============================================================ */
+const CONFIG_V2 = {
+  dataUrl: "https://script.google.com/macros/s/AKfycbxXGNimmt7sxziLMDpONyCYPlY5jVKatthELKS2O2H3OuNjGDWByRcdl5Jv3pi1DRkDoA/exec?action=responses"
+};
+
+/* answer options as they appear in snafu-survey-v2.html; several contain ", "
+   so answers are matched against this list instead of split on commas */
+const V2_OPTIONS = {
+  visit_freq: ["It's my first time","A few times per year","Monthly","Weekly or more"],
+  visit_reason: ["New beers","An event","Friends & family","Work nearby","Habit / regular spot","Picking up to-go beer","Other"],
+  heard_via: ["Friend recommendation","Google search","Social media","Drove by","An AI assistant (e.g., ChatGPT, Claude, Gemini)","Event listing","Tried your beer at a bar or restaurant","Untappd","Other"],
+  associations: ["Sour beers","Fun atmosphere","Cool events","Dog-friendly","The games","Other"],
+  social_follow: ["I follow you on Instagram","I follow you on Facebook","I follow you on TikTok","I get your texts","I get your emails","Other","None of the above"],
+  visit_more: ["More events","More food options","Longer hours","More specials or promotions","Nothing — I'm already here a lot","Other"],
+  event_prefs: ["Trivia nights","Live music","Food truck nights","New beer release parties","Sports viewing","Comedy / open mic","Vendor & maker markets","Fundraisers / charity nights","Other"],
+  take_home: ["Packaged beer (cans or crowlers)","Merchandise","Both","I'm unlikely to purchase to-go items"],
+  membership_interest: ["Yes — sign me up","Maybe — tell me more","Not right now"],
+  membership_perks: ["Discounted beer / merch","Free gift (e.g., mug, member-exclusive shirt)","Member-only releases","Member-only events","A punch card / rewards for visits","Other"]
+};
+
+let activeTab = "v1";
+let v2Loaded = false;
+
+document.querySelectorAll(".survey-tab").forEach(btn => {
+  btn.addEventListener("click", () => {
+    activeTab = btn.dataset.tab;
+    document.querySelectorAll(".survey-tab").forEach(b => b.classList.toggle("active", b === btn));
+    document.getElementById("panelV1").classList.toggle("hidden", activeTab !== "v1");
+    document.getElementById("panelV2").classList.toggle("hidden", activeTab !== "v2");
+    if (activeTab === "v2" && !v2Loaded) loadDataV2();
+  });
+});
+
+async function loadDataV2() {
+  v2Loaded = true;
+  document.getElementById("loadingStateV2").classList.remove("hidden");
+  document.getElementById("dashContentV2").classList.add("hidden");
+  try {
+    const res = await fetch(CONFIG_V2.dataUrl + "&t=" + Date.now());
+    const data = await res.json();
+    const records = (data.rows || []).map(r => {
+      const obj = {};
+      data.headers.forEach((h, i) => { obj[h] = String(r[i] ?? "").trim(); });
+      return obj;
+    }).filter(r => r.submitted_at);
+    if (!records.length) { showEmptyV2(); return; }
+    renderDashboardV2(records);
+  } catch (err) {
+    console.error(err);
+    showEmptyV2("Could not load v2 data. Check that the v2 Apps Script is deployed with the latest version.");
+  }
+}
+
+function showEmptyV2(msg) {
+  document.getElementById("loadingStateV2").classList.add("hidden");
+  document.getElementById("dashContentV2").innerHTML = `<div class="empty">${msg || "No responses yet."}</div>`;
+  document.getElementById("dashContentV2").classList.remove("hidden");
+}
+
+function renderDashboardV2(records) {
+  records = records.filter(r => r.status === "completed" || r.status === "abandoned");
+  if (!records.length) { showEmptyV2(); return; }
+
+  /* helpers (same as v1, except freq matches known options) */
+  const nums = (key) => records.map(r => parseFloat(r[key])).filter(v => !isNaN(v));
+  const avg  = (arr) => arr.length ? (arr.reduce((s,v)=>s+v,0)/arr.length).toFixed(2) : "—";
+  const freq = (key) => {
+    const m = {};
+    const opts = V2_OPTIONS[key];
+    records.forEach(r => {
+      const v = r[key];
+      if (!v) return;
+      if (opts) {
+        const padded = ", " + v + ", ";
+        opts.forEach(o => { if (padded.includes(", " + o + ", ")) m[o] = (m[o]||0)+1; });
+      } else {
+        v.split(", ").forEach(part => { part = part.trim(); if (part) m[part] = (m[part]||0)+1; });
+      }
+    });
+    return m;
+  };
+  const sortedFreq = (key, limit=10) =>
+    Object.entries(freq(key)).sort((a,b)=>b[1]-a[1]).slice(0,limit);
+  const cnt = key => records.filter(r => r[key]).length;
+
+  /* NPS (0-10) */
+  const npsVals = nums("nps");
+  const promoters  = npsVals.filter(v=>v>=9).length;
+  const passives   = npsVals.filter(v=>v>=7&&v<=8).length;
+  const detractors = npsVals.filter(v=>v<=6).length;
+  const total_nps  = npsVals.length || 1;
+  const npsScore   = Math.round((promoters/total_nps - detractors/total_nps) * 100);
+  const npsColor   = npsScore >= 50 ? "green" : npsScore >= 0 ? "teal" : "warn";
+
+  /* Completion rate */
+  const completed  = records.filter(r => r.status === "completed").length;
+  const abandoned  = records.filter(r => r.status === "abandoned").length;
+  const tracked    = completed + abandoned;
+  const compRate   = tracked > 0 ? Math.round(completed / tracked * 100) : null;
+  const compColor  = compRate === null ? "teal" : compRate >= 70 ? "green" : compRate >= 40 ? "teal" : "warn";
+
+  /* Avg satisfaction */
+  const satVals = nums("overall_satisfaction");
+  const avgSat  = avg(satVals);
+
+  /* Contact opt-ins (completed responses only) */
+  const optIns = records.filter(r => r.status === "completed" && r.contact_shared === "yes").length;
+
+  /* dates */
+  const dates = records.map(r => r.submitted_at ? new Date(r.submitted_at) : null).filter(d => d && !isNaN(d));
+  const dateRange = dates.length >= 2
+    ? dates.reduce((a,d)=>d<a?d:a).toLocaleDateString() + " - " + dates.reduce((a,d)=>d>a?d:a).toLocaleDateString()
+    : dates.length === 1 ? dates[0].toLocaleDateString() : "—";
+
+  let html = `
+  <div class="stats-strip">
+    <div class="stat-card">
+      <div class="stat-n">n=${tracked}</div>
+      <div class="lbl">Completion Rate</div>
+      <div class="val ${compColor}">${compRate !== null ? compRate + "%" : "—"}</div>
+      <div class="sub">${tracked > 0 ? `${completed} completed · ${abandoned} abandoned` : "Tracking starts now"}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-n">n=${tracked}</div>
+      <div class="lbl">Total Responses</div>
+      <div class="val teal">${tracked}</div>
+      <div class="sub">${dateRange}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-n">n=${npsVals.length}</div>
+      <div class="lbl">NPS Score</div>
+      <div class="val ${npsColor}">${npsVals.length ? npsScore : "—"}</div>
+      ${npsVals.length ? `
+      <div class="nps-bar-wrap">
+        <div class="nps-seg" style="width:${promoters/total_nps*100}%;background:var(--ok)"></div>
+        <div class="nps-seg" style="width:${passives/total_nps*100}%;background:var(--muted)"></div>
+        <div class="nps-seg" style="width:${detractors/total_nps*100}%;background:var(--danger)"></div>
+      </div>
+      <div class="nps-legend">
+        <span><span class="dot" style="background:var(--ok)"></span>${promoters} promoters</span>
+        <span><span class="dot" style="background:var(--muted)"></span>${passives} passive</span>
+        <span><span class="dot" style="background:var(--danger)"></span>${detractors} detractors</span>
+      </div>` : ""}
+    </div>
+    <div class="stat-card">
+      <div class="stat-n">n=${satVals.length}</div>
+      <div class="lbl">Avg Satisfaction</div>
+      <div class="val teal">${avgSat}<span style="font-size:16px;font-weight:500;color:var(--muted)"> / 5</span></div>
+      <div class="sub">Based on ${satVals.length} responses</div>
+    </div>
+  </div>
+
+  <div class="chart-grid">
+
+    <div class="chart-card">
+      <div class="stat-n">n=${cnt("visit_freq")}</div>
+      <h3>Visit Frequency</h3>
+      <div class="q-label">How often do you visit Snafu?</div>
+      <div class="chart-wrap short"><canvas id="v2VisitFreq"></canvas></div>
+    </div>
+
+    <div class="chart-card">
+      <div class="stat-n">n=${cnt("visit_reason")}</div>
+      <h3>What Brought Them In</h3>
+      <div class="q-label">What brought you in today? (multi-select)</div>
+      <div class="chart-wrap short"><canvas id="v2VisitReason"></canvas></div>
+    </div>
+
+    <div class="chart-card">
+      <div class="stat-n">n=${cnt("heard_via")}</div>
+      <h3>How They Found Us</h3>
+      <div class="q-label">How did you first hear about Snafu?</div>
+      <div class="chart-wrap"><canvas id="v2HeardVia"></canvas></div>
+    </div>
+
+    <div class="chart-card">
+      <div class="stat-n">n=${cnt("associations")}</div>
+      <h3>Brand Associations</h3>
+      <div class="q-label">What do you most associate Snafu with? (multi-select)</div>
+      <div class="chart-wrap"><canvas id="v2Assoc"></canvas></div>
+    </div>
+
+    <div class="chart-card">
+      <div class="stat-n">n=${cnt("social_follow")}</div>
+      <h3>How They Keep Up</h3>
+      <div class="q-label">How do you keep up with Snafu Brewing Company? (multi-select)</div>
+      <div class="chart-wrap short"><canvas id="v2Social"></canvas></div>
+    </div>
+
+    <div class="chart-card">
+      <div class="stat-n">n=${satVals.length}</div>
+      <h3>Satisfaction Breakdown</h3>
+      <div class="q-label">Overall satisfaction rating distribution (1-5)</div>
+      <div class="chart-wrap short"><canvas id="v2SatDist"></canvas></div>
+    </div>
+
+    <div class="chart-card full">
+      <div class="stat-n">n=${cnt("ratings_beer")}</div>
+      <h3>Experience Ratings</h3>
+      <div class="q-label">Please rate each of the following (1 = poor, 5 = excellent)</div>
+      <div class="chart-wrap tall"><canvas id="v2Ratings"></canvas></div>
+    </div>
+
+    <div class="chart-card full">
+      <div class="stat-n">n=${npsVals.length}</div>
+      <h3>NPS Distribution</h3>
+      <div class="q-label">How likely are you to recommend Snafu to a friend? (0-10)</div>
+      <div class="chart-wrap short"><canvas id="v2NpsDist"></canvas></div>
+    </div>
+
+    <div class="chart-card">
+      <div class="stat-n">n=${cnt("visit_more")}</div>
+      <h3>What Would Encourage More Visits</h3>
+      <div class="q-label">What would get you to visit more often? (multi-select)</div>
+      <div class="chart-wrap"><canvas id="v2VisitMore"></canvas></div>
+    </div>
+
+    <div class="chart-card">
+      <div class="stat-n">n=${cnt("event_prefs")}</div>
+      <h3>Event Interest</h3>
+      <div class="q-label">What kinds of events would you like to see at Snafu? (multi-select)</div>
+      <div class="chart-wrap"><canvas id="v2Events"></canvas></div>
+    </div>
+
+    <div class="chart-card">
+      <div class="stat-n">n=${cnt("take_home")}</div>
+      <h3>To-Go Purchases</h3>
+      <div class="q-label">What are you most likely to purchase to take home?</div>
+      <div class="chart-wrap short"><canvas id="v2TakeHome"></canvas></div>
+    </div>
+
+    <div class="chart-card">
+      <div class="stat-n">n=${cnt("membership_interest")}</div>
+      <h3>Membership Interest</h3>
+      <div class="q-label">Would you be interested in a Snafu membership program?</div>
+      <div class="chart-wrap short"><canvas id="v2Membership"></canvas></div>
+    </div>
+
+    <div class="chart-card">
+      <div class="stat-n">n=${cnt("membership_perks")}</div>
+      <h3>Membership Priorities</h3>
+      <div class="q-label">What would matter most in a membership? (multi-select; Yes/Maybe only)</div>
+      <div class="chart-wrap"><canvas id="v2Perks"></canvas></div>
+    </div>
+
+    <div class="chart-card">
+      <div class="stat-n">n=${completed}</div>
+      <h3>Updates Opt-ins</h3>
+      <div class="q-label">Shared an email or phone to receive updates from Snafu</div>
+      <div class="val teal" style="font-size:32px;font-weight:900;line-height:1">${optIns}</div>
+      <div class="sub" style="font-size:12px;color:var(--muted);margin-top:4px">${completed ? Math.round(optIns/completed*100) + "% of completed responses" : "No completed responses yet"} · contact details stay in the Google Sheet</div>
+    </div>
+
+    <div class="chart-card full">
+      <div class="stat-n">n=${cnt("zip_code")}</div>
+      <h3>Top Zip Codes</h3>
+      <div class="q-label">Where are your guests traveling from?</div>
+      <div id="v2ZipTable"></div>
+    </div>
+
+  </div>
+
+  <div class="responses-section" style="margin-top:24px">
+    <h3>Open-Ended Responses</h3>
+    <p>What guests are saying in their own words.</p>
+    <div class="resp-tabs">
+      <button class="resp-tab2 active" onclick="showRespTabV2('love_most',this)">What they love</button>
+      <button class="resp-tab2" onclick="showRespTabV2('improve',this)">What to improve</button>
+    </div>
+    <div class="resp-list" id="respListV2"></div>
+  </div>
+  `;
+
+  document.getElementById("dashContentV2").innerHTML = html;
+  document.getElementById("dashContentV2").classList.remove("hidden");
+  document.getElementById("loadingStateV2").classList.add("hidden");
+
+  /* ---- Draw charts (same styles as v1) ---- */
+  function hbar(id, labels, data, colors) {
+    new Chart(document.getElementById(id), {
+      type: "bar",
+      data: { labels, datasets: [{ data, backgroundColor: colors || PALETTE.slice(0,labels.length), borderRadius: 6, borderSkipped: false }] },
+      options: {
+        indexAxis: "y", responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: { x: { grid: { color: "#2c2c3a" }, ticks: { precision: 0 } }, y: { grid: { display: false } } }
+      }
+    });
+  }
+  function vbar(id, labels, data, colors) {
+    new Chart(document.getElementById(id), {
+      type: "bar",
+      data: { labels, datasets: [{ data, backgroundColor: colors || PALETTE.slice(0,labels.length), borderRadius: 6, borderSkipped: false }] },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: { x: { grid: { display: false } }, y: { grid: { color: "#2c2c3a" }, ticks: { precision: 0 } } }
+      }
+    });
+  }
+  function doughnut(id, key, colors) {
+    const d = sortedFreq(key);
+    new Chart(document.getElementById(id), {
+      type: "doughnut",
+      data: { labels: d.map(x=>x[0]), datasets: [{ data: d.map(x=>x[1]), backgroundColor: colors, borderWidth: 0 }] },
+      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: "bottom", labels: { padding: 16, boxWidth: 12 } } } }
+    });
+  }
+  const hbarKey = (id, key) => { const d = sortedFreq(key); hbar(id, d.map(x=>x[0]), d.map(x=>x[1])); };
+
+  hbarKey("v2VisitFreq", "visit_freq");
+  hbarKey("v2VisitReason", "visit_reason");
+  hbarKey("v2HeardVia", "heard_via");
+  hbarKey("v2Assoc", "associations");
+  hbarKey("v2Social", "social_follow");
+
+  const satDist = [1,2,3,4,5].map(v => satVals.filter(s=>s===v).length);
+  vbar("v2SatDist", ["1","2","3","4","5"], satDist, ["#f87171","#fb923c","#fbbf24","#4ade80","#5EDDD8"]);
+
+  const ratingKeys   = ["beer","staff_engagement","atmosphere","comfort","value"];
+  const ratingLabels = ["Beer","Staff Engagement","Atmosphere","Comfort","Value"];
+  const ratingAvgs = ratingKeys.map(k => {
+    const vals = nums("ratings_" + k);
+    return vals.length ? parseFloat((vals.reduce((s,v)=>s+v,0)/vals.length).toFixed(2)) : 0;
+  });
+  new Chart(document.getElementById("v2Ratings"), {
+    type: "bar",
+    data: { labels: ratingLabels, datasets: [{ label: "Avg rating (out of 5)", data: ratingAvgs, backgroundColor: TEAL, borderRadius: 8, borderSkipped: false }] },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => " " + ctx.parsed.y + " / 5" } } },
+      scales: { x: { grid: { display: false } }, y: { grid: { color: "#2c2c3a" }, min: 0, max: 5, ticks: { stepSize: 1 } } }
+    }
+  });
+
+  /* v2 uses a true 0-10 scale */
+  const npsDist = Array.from({length:11},(_,i)=>npsVals.filter(v=>v===i).length);
+  const npsColors = npsDist.map((_,i) => i<=6 ? "#f87171" : i<=8 ? "#8a8896" : "#4ade80");
+  vbar("v2NpsDist", ["0","1","2","3","4","5","6","7","8","9","10"], npsDist, npsColors);
+
+  hbarKey("v2VisitMore", "visit_more");
+  hbarKey("v2Events", "event_prefs");
+  doughnut("v2TakeHome", "take_home", [TEAL, MAGENTA, "#4ade80", "#8a8896"]);
+  doughnut("v2Membership", "membership_interest", [TEAL, MAGENTA, "#8a8896"]);
+  hbarKey("v2Perks", "membership_perks");
+
+  const zips = sortedFreq("zip_code");
+  const maxZipCount = zips[0] ? zips[0][1] : 1;
+  document.getElementById("v2ZipTable").innerHTML = zips.length
+    ? `<table class="zip-table"><thead><tr><th>Zip code</th><th>Count</th><th class="zip-bar-cell"></th></tr></thead><tbody>`
+      + zips.map(([z,c]) => `<tr><td>${escHtml(z)}</td><td>${c}</td><td class="zip-bar-cell"><div class="zip-bar-bg"><div class="zip-bar-fill" style="width:${c/maxZipCount*100}%"></div></div></td></tr>`).join("")
+      + `</tbody></table>`
+    : `<div class="empty">No zip code data yet.</div>`;
+
+  window._respRecordsV2 = records;
+  showRespTabV2("love_most", document.querySelector(".resp-tab2.active"));
+}
+
+function showRespTabV2(field, el) {
+  document.querySelectorAll(".resp-tab2").forEach(t => t.classList.remove("active"));
+  el.classList.add("active");
+  const items = (window._respRecordsV2 || []).filter(r => r[field] && r[field].trim());
+  const list  = document.getElementById("respListV2");
+  if (!items.length) { list.innerHTML = `<div class="empty">No responses for this question yet.</div>`; return; }
+  list.innerHTML = items.map(r => {
+    const date = r.submitted_at ? new Date(r.submitted_at).toLocaleDateString() : "";
+    return `<div class="resp-item">${escHtml(r[field])}<div class="meta">${date}</div></div>`;
+  }).join("");
+}
 </script>
 <!-- REDEEM MODAL -->
 <div id="redeemModal" class="modal-overlay hidden">
