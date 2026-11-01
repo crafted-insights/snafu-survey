@@ -343,6 +343,7 @@ const SURVEY = [
     options: ["I follow you on Instagram","I follow you on Facebook","I follow you on TikTok","I get your texts","I get your emails"],
     hasOther: true,
     afterOther: ["None of the above"],
+    exclusive: ["None of the above"],
     required: false
   },
   /* ---------- SECTION 3: YOUR EXPERIENCE ---------- */
@@ -399,6 +400,7 @@ const SURVEY = [
     q: "What would get you to visit more often?",
     hint: "Pick all that apply.",
     options: ["More events","More food options","Longer hours","More specials or promotions","Nothing — I'm already here a lot"],
+    exclusive: ["Nothing — I'm already here a lot"],
     hasOther: true,
     required: true
   },
@@ -622,7 +624,11 @@ function buildText(q) {
 function attach(q) {
   if (q.type === "single") {
     qs("#stage").querySelectorAll(".opt").forEach(b => {
-      b.addEventListener("click", () => { ans[q.id] = b.dataset.v; render(); });
+      b.addEventListener("click", () => {
+        ans[q.id] = b.dataset.v;
+        if (b.dataset.v !== otherLabel(q)) delete ans[q.id + "_other"];
+        render();
+      });
     });
     const otf = qs("#otf");
     if (otf) otf.addEventListener("input", ev => { ans[q.id+"_other"] = ev.target.value; refreshNext(q); });
@@ -630,9 +636,13 @@ function attach(q) {
   if (q.type === "multi") {
     qs("#stage").querySelectorAll(".opt").forEach(b => {
       b.addEventListener("click", () => {
-        const s = new Set(ans[q.id] || []);
-        s.has(b.dataset.v) ? s.delete(b.dataset.v) : s.add(b.dataset.v);
+        const v = b.dataset.v, ex = q.exclusive || [];
+        let s = new Set(ans[q.id] || []);
+        if (s.has(v)) s.delete(v);
+        else if (ex.includes(v)) s = new Set([v]);          // "None"-style answers clear the rest
+        else { ex.forEach(e => s.delete(e)); s.add(v); }   // and are cleared by any other pick
         ans[q.id] = [...s];
+        if (!s.has(otherLabel(q))) delete ans[q.id + "_other"];
         render();
       });
     });
@@ -725,7 +735,7 @@ let abandonSent = false;
 function sendAbandon() {
   if (abandonSent || !surveyStarted || surveyCompleted || Object.keys(ans).length === 0 || !CONFIG.appsScriptUrl) return;
   abandonSent = true;
-  const payload = { submitted_at: new Date().toISOString(), status: "abandoned", step_reached: step + 1, total_steps: SURVEY.length, discount_code: discountCode, ...flattenAns() };
+  const payload = { submitted_at: new Date().toISOString(), status: "abandoned", step_reached: visible().indexOf(SURVEY[step]) + 1, total_steps: visible().length, discount_code: discountCode, ...flattenAns() };
   fetch(CONFIG.appsScriptUrl, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify(payload), keepalive: true });
 }
 window.addEventListener("visibilitychange", () => { if (document.visibilityState === "hidden") sendAbandon(); });
